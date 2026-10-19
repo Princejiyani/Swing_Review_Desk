@@ -181,6 +181,34 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   .stat b{font-size:12px;line-height:1.25;letter-spacing:0}
 }
 
+
+/* Local research notes: collapsed by default so the price chart stays large. */
+.research-notes{flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
+.research-notes>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 9px;font-size:10px;font-weight:750;cursor:pointer;color:var(--text)}
+.research-notes>summary::-webkit-details-marker{display:none}
+.research-notes>summary:after{content:'＋';margin-left:auto;color:var(--muted);font-size:11px}
+.research-notes[open]>summary:after{content:'−'}
+.notes-summary-meta{font-size:9px;font-weight:500;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.research-notes-body{padding:4px 8px 7px;border-top:1px solid var(--line);max-height:32vh;overflow:auto}
+.notes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.notes-grid label{display:block;min-width:0;font-size:9px;font-weight:700;color:var(--muted)}
+.notes-grid .field{display:block;width:100%;margin-top:3px;padding:5px 7px;font-size:11px;resize:vertical}
+.notes-grid textarea.field{min-height:42px;line-height:1.35}
+.notes-wide{grid-column:1/-1}
+.notes-save-status{margin-top:5px;font-size:9px;line-height:1.3;color:var(--muted)}
+:root[data-theme="dark"] .research-notes{background:#050505;border-color:#262626}
+:root[data-theme="dark"] .research-notes-body{border-color:#262626}
+@media(max-width:520px){.notes-grid{grid-template-columns:1fr}.notes-wide{grid-column:auto}.notes-summary-meta{max-width:60%}}
+@media(min-width:901px){
+ .research-notes>summary{padding:3px 7px;font-size:9px}
+ .notes-summary-meta{font-size:8px}
+ .research-notes-body{padding:4px 7px 6px}
+ .notes-grid{gap:5px}
+ .notes-grid label{font-size:9px}
+ .notes-grid .field{padding:4px 6px;font-size:10px}
+ .notes-grid textarea.field{min-height:34px}
+ .notes-save-status{font-size:8px}
+}
 </style></head>
 <body>
 <header><div><h1>⚡ Swing Review Desk</h1><small>Scanner review · Daily price action · Trend filters</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="exportKeep">Export kept</button><button id="exportAll">Export all decisions</button></div></header>
@@ -211,13 +239,61 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 <div class="summary-metric"><small>EMA 200</small><strong id="summaryEma200">—</strong><span class="summary-sub" id="summaryDist200">—</span></div>
 <div class="summary-metric summary-trend"><small>Trend / decision</small><strong id="summaryTrend">Awaiting data</strong><span class="summary-sub" id="summaryDecision">Not reviewed</span></div>
 </div>
+<details class="research-notes" id="researchNotes">
+<summary><span>Research notes</span><span class="notes-summary-meta" id="notesTickerLabel">Saved locally in this browser</span></summary>
+<div class="research-notes-body">
+<div class="notes-grid">
+<label>Setup type<select class="field" id="noteSetupType"><option value="">Not set</option><option>Breakout</option><option>Pullback</option><option>Trend continuation</option><option>Base breakout</option><option>Reversal</option><option>Other</option></select></label>
+<label>Research status<select class="field" id="noteStatus"><option>Draft</option><option>Watching</option><option>Ready for review</option><option>Invalidated</option><option>Archived</option></select></label>
+<label class="notes-wide">Trend / market context<textarea class="field" id="noteTrendContext" rows="2" maxlength="2000" placeholder="Trend, sector strength, market context…"></textarea></label>
+<label class="notes-wide">Entry rationale / confirmation<textarea class="field" id="noteEntryRationale" rows="2" maxlength="2000" placeholder="What confirms the setup? What needs to happen before entry?"></textarea></label>
+<label>Invalidation / stop level<input class="field" id="noteInvalidation" maxlength="200" placeholder="Price level or condition"></label>
+<label>Review date<input class="field" id="noteReviewDate" type="date"></label>
+</div>
+<div class="notes-save-status" id="notesSaveStatus" aria-live="polite">Notes are stored locally in this browser, per ticker.</div>
+</div>
+</details>
 <div class="chartbox" id="chartbox"><div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div></div>
 <div class="foot"><div class="row"><button id="keepBtn" class="good" disabled>✓ Keep <span class="key">K</span></button><button id="skipBtn" class="bad" disabled>✕ Skip <span class="key">S</span></button><button id="laterBtn" class="warn" disabled>◷ Later <span class="key">L</span></button></div><div class="row"><span class="muted" id="position">0 / 0</span><button id="nextUndecided" disabled>Next undecided ↓</button></div></div>
 <div class="notice">Daily historical candles with EMA 10/20/50/200 and volume. Launch this page using start_swing_review.bat so the local data helper can retrieve history. Not live data.</div>
 </main>
 </div>
 <script>
-const $=id=>document.getElementById(id);let stocks=[],active=0,filesLoaded=0,sortAZ=false;const decisions=new Map();
+const $=id=>document.getElementById(id);let stocks=[],active=0,filesLoaded=0,sortAZ=false;
+function readReviewState(){
+ const empty={version:1,decisions:{},notes:{}};
+ try{
+  const parsed=JSON.parse(localStorage.getItem('swingReviewStateV1')||'{}');
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return empty;
+  const decisions={};
+  if(parsed.decisions&&typeof parsed.decisions==='object'&&!Array.isArray(parsed.decisions)){
+   for(const [ticker,value] of Object.entries(parsed.decisions)){if(['Keep','Skip','Later'].includes(value))decisions[ticker]=value}
+  }
+  const notes={};
+  if(parsed.notes&&typeof parsed.notes==='object'&&!Array.isArray(parsed.notes)){
+   for(const [ticker,note] of Object.entries(parsed.notes)){
+    if(!note||typeof note!=='object'||Array.isArray(note))continue;
+    notes[ticker]={
+     setupType:String(note.setupType||'').slice(0,80),
+     trendContext:String(note.trendContext||'').slice(0,2000),
+     entryRationale:String(note.entryRationale||'').slice(0,2000),
+     invalidation:String(note.invalidation||'').slice(0,200),
+     reviewDate:String(note.reviewDate||'').slice(0,20),
+     status:String(note.status||'Draft').slice(0,40),
+     updatedAt:String(note.updatedAt||'').slice(0,40)
+    };
+   }
+  }
+  return {version:1,decisions,notes};
+ }catch(e){return empty}
+}
+const reviewState=readReviewState();
+const decisions=new Map(Object.entries(reviewState.decisions));
+function saveReviewState(){
+ reviewState.version=1;reviewState.decisions=Object.fromEntries(decisions);
+ try{localStorage.setItem('swingReviewStateV1',JSON.stringify(reviewState));return true}
+ catch(e){const status=$('notesSaveStatus');if(status)status.textContent='Could not save: browser storage may be unavailable or full.';return false}
+}
 function readWatchlist(){try{const value=JSON.parse(localStorage.getItem('swingReviewMyWatchlist')||'[]');return Array.isArray(value)?[...new Set(value.map(x=>String(x||'').trim().toUpperCase()).filter(x=>/^[A-Z0-9._&-]+:[A-Z0-9._&-]+$/.test(x)))]:[]}catch(e){return[]}}
 let myWatchlist=readWatchlist();
 function saveWatchlist(){try{localStorage.setItem('swingReviewMyWatchlist',JSON.stringify(myWatchlist))}catch(e){}}
@@ -408,6 +484,33 @@ function renderSummary(stock){
  const trend=trendLabel(snapshot);put('summaryTrend',trend);const trendEl=$('summaryTrend');if(trendEl)trendEl.className=trend.toLowerCase().includes('bullish')?'positive':trend.toLowerCase().includes('bearish')?'negative':'neutral';
  put('summaryDecision',decisions.get(stock.ticker)||'Not reviewed');
 }
+
+function renderResearchNotes(stock){
+ const ids=['noteSetupType','noteStatus','noteTrendContext','noteEntryRationale','noteInvalidation','noteReviewDate'];
+ const note=stock?(reviewState.notes[stock.ticker]||{}):{};
+ const label=$('notesTickerLabel');
+ if(label)label.textContent=stock?(stock.ticker+' · saved locally'):'Select a stock to add notes';
+ for(const id of ids){const el=$(id);if(!el)continue;el.disabled=!stock;
+  const key={noteSetupType:'setupType',noteStatus:'status',noteTrendContext:'trendContext',noteEntryRationale:'entryRationale',noteInvalidation:'invalidation',noteReviewDate:'reviewDate'}[id];
+  el.value=note[key]|| (id==='noteStatus'?'Draft':'');
+ }
+ const status=$('notesSaveStatus');
+ if(status)status.textContent=stock?'Notes are stored locally in this browser, per ticker.':'Select a stock before adding notes.';
+}
+function saveResearchNote(){
+ const stock=current();if(!stock)return;
+ reviewState.notes[stock.ticker]={
+  setupType:$('noteSetupType').value,
+  status:$('noteStatus').value,
+  trendContext:$('noteTrendContext').value.slice(0,2000),
+  entryRationale:$('noteEntryRationale').value.slice(0,2000),
+  invalidation:$('noteInvalidation').value.slice(0,200),
+  reviewDate:$('noteReviewDate').value,
+  updatedAt:new Date().toISOString()
+ };
+ const status=$('notesSaveStatus');
+ if(saveReviewState()){if(status)status.textContent='Saved locally for '+stock.ticker+' · '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+}
 function matchesEMAFilter(stock,filter){
  if(filter==='all')return true;
  const snapshot=emaSnapshot(chartDataByTicker.get(stock.ticker));if(!snapshot)return false;
@@ -448,15 +551,17 @@ function render(){
  $('stockList').innerHTML='';
  if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Try changing filters or load EMA data for the list.</div>'}
  else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d||'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
- $('countStocks').textContent=stocks.length;$('countKeep').textContent=[...decisions.values()].filter(x=>x==='Keep').length;$('countSkip').textContent=[...decisions.values()].filter(x=>x==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';
- if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';renderSummary(null);$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
+ $('countStocks').textContent=stocks.length;$('countKeep').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Keep').length;$('countSkip').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';
+ if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';renderSummary(null);renderResearchNotes(null);$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
  $('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Decision: '+(decisions.get(s.ticker)||'Not reviewed');
- renderSummary(s);makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)
+ renderSummary(s);renderResearchNotes(s);makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)
 }
-function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);if(d!=='Later'){}render()}function next(){if(active<stocks.length-1){active++;render()}}function prev(){if(active>0){active--;render()}}function nextUndecided(){if(!stocks.length)return;for(let n=1;n<=stocks.length;n++){let i=(active+n)%stocks.length;if(!decisions.has(stocks[i].ticker)){active=i;render();return}}alert('All stocks have a decision. You can export or clear decisions.')}
+function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);saveReviewState();render()}function next(){if(active<stocks.length-1){active++;render()}}function prev(){if(active>0){active--;render()}}function nextUndecided(){if(!stocks.length)return;for(let n=1;n<=stocks.length;n++){let i=(active+n)%stocks.length;if(!decisions.has(stocks[i].ticker)){active=i;render();return}}alert('All stocks have a decision. You can export or clear decisions.')}
 function exportCSV(mode){let list=stocks.filter(s=>mode==='keep'?decisions.get(s.ticker)==='Keep':decisions.has(s.ticker));if(mode==='all')list=stocks.filter(s=>decisions.has(s.ticker));if(mode==='keep'&&!list.length){alert('No stocks marked Keep yet.');return}const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';let csv=[['Ticker','Decision','Scanner(s)','TradingView URL'].map(esc).join(','),...list.map(s=>[s.ticker,decisions.get(s.ticker)||'',s.scanners.join('; '),'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(s.ticker)].map(esc).join(','))].join('\r\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=mode==='keep'?'swing_kept_stocks.csv':'swing_review_decisions.csv';a.click();URL.revokeObjectURL(url)}
 $('themeToggle').addEventListener('click',toggleTheme);applyTheme();
+$('noteSetupType').addEventListener('change',saveResearchNote);$('noteStatus').addEventListener('change',saveResearchNote);$('noteReviewDate').addEventListener('change',saveResearchNote);
+$('noteTrendContext').addEventListener('input',saveResearchNote);$('noteEntryRationale').addEventListener('input',saveResearchNote);$('noteInvalidation').addEventListener('input',saveResearchNote);
 $('files').addEventListener('change',async e=>{const selected=[...e.target.files];for(const f of selected){try{addCSV(f.name,await f.text());filesLoaded++}catch(err){alert('Could not read '+f.name+': '+err.message)}}if(stocks.length){stocks.sort((a,b)=>a.ticker.localeCompare(b.ticker));active=0}render();e.target.value=''});
-$('search').addEventListener('input',render);$('decisionFilter').addEventListener('change',render);$('emaFilter').addEventListener('change',render);$('scanEMAData').addEventListener('click',scanEMAData);$('addWatchTicker').onclick=addWatchlistTicker;$('watchTickerInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWatchlistTicker()}});$('watchToggle').onclick=toggleCurrentWatchlist;$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('exportKeep').onclick=()=>exportCSV('keep');$('exportAll').onclick=()=>exportCSV('all');$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();render()}};
+$('search').addEventListener('input',render);$('decisionFilter').addEventListener('change',render);$('emaFilter').addEventListener('change',render);$('scanEMAData').addEventListener('click',scanEMAData);$('addWatchTicker').onclick=addWatchlistTicker;$('watchTickerInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWatchlistTicker()}});$('watchToggle').onclick=toggleCurrentWatchlist;$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('exportKeep').onclick=()=>exportCSV('keep');$('exportAll').onclick=()=>exportCSV('all');$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();saveReviewState();render()}};
 document.addEventListener('keydown',e=>{if(e.altKey&&!e.ctrlKey&&!e.metaKey&&e.key.toLowerCase()==='r'){e.preventDefault();resetChartView();return}if(e.key==='Escape'&&drawingTool!=='cursor'){selectDrawingTool('cursor');pendingAnchor=null;mousePoint=null;drawDrawingOverlay();return}if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(e.key==='ArrowDown'){e.preventDefault();next()}else if(e.key==='ArrowUp'){e.preventDefault();prev()}else if(e.key.toLowerCase()==='k')setDecision('Keep');else if(e.key.toLowerCase()==='s')setDecision('Skip');else if(e.key.toLowerCase()==='l')setDecision('Later');else if(e.key==='Enter')next()});render();
 </script></body></html>
