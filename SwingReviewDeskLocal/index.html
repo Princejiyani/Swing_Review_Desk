@@ -375,26 +375,53 @@ button:active{transform:none}
 @media(max-width:900px){.selection-export-status{width:100%;max-width:none}}
 
 
-/* Fix: make the stock list the independently scrollable flex child of the sidebar. */
+/* Reliable stock-list scrolling: constrain the grid row, then scroll inside the list. */
 @media (min-width:901px){
-  .wrap>aside{min-height:0;overflow:hidden}
-  .wrap>aside>.pad{flex:0 0 auto;min-height:0}
+  .wrap{
+    grid-template-rows:minmax(0,1fr);
+    min-height:0;
+  }
+  .wrap>aside{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+  }
+  .wrap>aside>.pad{
+    flex:0 0 auto;
+    min-height:0;
+  }
   .wrap>aside>#stockList{
     display:block;
-    flex:1 1 0;
+    flex:1 1 0%;
+    height:auto;
     min-height:0;
-    height:0;
     max-height:none;
-    overflow-y:scroll;
     overflow-x:hidden;
-    overscroll-behavior:contain;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
     scrollbar-gutter:stable;
     -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
   }
   .wrap>aside>.notice{flex:0 0 auto}
 }
+#stockList{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+#stockList::-webkit-scrollbar{width:10px}
+#stockList::-webkit-scrollbar-track{background:transparent}
+#stockList::-webkit-scrollbar-thumb{background:#b8c1d3;border:2px solid transparent;border-radius:10px;background-clip:padding-box}
+:root[data-theme="dark"] #stockList::-webkit-scrollbar-thumb{background:#525252;border:2px solid transparent;background-clip:padding-box}
 @media (max-width:900px){
-  #stockList{max-height:320px;min-height:130px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  #stockList{
+    display:block;
+    height:auto;
+    max-height:42vh;
+    min-height:120px;
+    overflow-x:hidden;
+    overflow-y:auto;
+    touch-action:pan-y;
+  }
 }
 
 </style></head>
