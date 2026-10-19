@@ -79,6 +79,24 @@
 :root[data-theme="dark"] .style-panel[open] summary{background:#202020;color:#c7d2fe}
 button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:520px){header .row{gap:6px}header .row button{min-width:0;padding:8px 9px;font-size:12px}.wrap{padding:9px}.pad{padding:12px}.chart-toolbar .row{width:100%}.chart-toolbar .row button{flex:1}.drawing-toolbar{gap:5px}.drawing-toolbar .draw-tool,.drawing-toolbar .draw-action{font-size:10px;padding:6px 7px}}
+
+/* Phase 2: stock summary and review filters */
+.review-filters{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.review-filters .field{min-width:0;padding:8px 9px;font-size:12px}
+.review-filters .filter-wide{grid-column:1/-1}
+.filter-status{font-size:10px;color:var(--muted);line-height:1.4;margin-top:6px}
+.ema-scan-button{width:100%;padding:8px 10px;font-size:12px}
+.summary-panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+.summary-metric{min-width:0;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.summary-metric small{display:block;font-size:10px;color:var(--muted);white-space:nowrap}
+.summary-metric strong{display:block;font-size:14px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.summary-metric .summary-sub{display:block;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-metric.summary-trend strong{font-size:12px}
+.summary-panel .positive{color:var(--green)}.summary-panel .negative{color:var(--red)}.summary-panel .neutral{color:var(--muted)}
+:root[data-theme="dark"] .summary-panel,:root[data-theme="dark"] .summary-metric{background:#0a0a0a;border-color:#262626}
+@media(max-width:1200px){.summary-panel{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;gap:6px}.summary-metric{padding:7px}.review-filters{grid-template-columns:1fr}.review-filters .filter-wide{grid-column:auto}}
+
 </style></head>
 <body>
 <header><div><h1>⚡ Swing Review Desk</h1><small>Scanner review · Daily price action · Trend filters</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="exportKeep">Export kept</button><button id="exportAll">Export all decisions</button></div></header>
@@ -88,6 +106,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 <div class="row between"><b class="section-title">Scanner review list</b><span class="pill" id="fileCount">0 files</span></div>
 
 <input class="field" id="search" placeholder="Search ticker or scanner…">
+<div class="review-filters" aria-label="Stock review filters">
+<select class="field" id="decisionFilter" aria-label="Filter by review decision"><option value="all">All decisions</option><option value="Keep">Keep only</option><option value="Skip">Skip only</option><option value="Later">Later only</option><option value="unreviewed">Unreviewed only</option></select>
+<select class="field" id="emaFilter" aria-label="Filter by price and EMA"><option value="all">All EMA conditions</option><option value="above10">Close above EMA 10</option><option value="below10">Close below EMA 10</option><option value="above20">Close above EMA 20</option><option value="below20">Close below EMA 20</option><option value="above50">Close above EMA 50</option><option value="below50">Close below EMA 50</option><option value="above200">Close above EMA 200</option><option value="below200">Close below EMA 200</option><option value="bullish">Bullish EMA alignment</option><option value="bearish">Bearish EMA alignment</option></select>
+<button class="ema-scan-button filter-wide" id="scanEMAData">↻ Load EMA data for imported stocks</button>
+</div>
+<div class="filter-status" id="filterStatus">EMA filters use data loaded in this session. Load EMA data to scan the full imported list.</div>
 <div class="row"><label class="muted" for="market">Market</label><select class="field" id="market" style="flex:1"><option value="NSE">NSE (India)</option><option value="BSE">BSE (India)</option><option value="NASDAQ">NASDAQ (US)</option><option value="NYSE">NYSE (US)</option></select></div>
 <div class="row"><button id="sortName">Sort A–Z</button><button id="clearDecisions">Clear decisions</button></div>
 <div class="stats"><div class="stat"><small>Stocks</small><b id="countStocks">0</b></div><div class="stat"><small>Kept</small><b id="countKeep" style="color:var(--green)">0</b></div><div class="stat"><small>Skipped</small><b id="countSkip" style="color:var(--red)">0</b></div></div>
@@ -97,6 +121,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 </aside>
 <main class="panel main">
 <div class="topline"><div><div class="ticker" id="activeTicker">No stock selected</div><div class="muted" id="activeMeta">Import one or more Chartink CSV files.</div></div><div class="row"><button id="prevBtn" disabled>↑ Previous</button><button id="nextBtn" disabled>↓ Next</button><button id="watchToggle" disabled>☆ Add to Watchlist</button><button id="openTV" disabled>Open TradingView ↗</button></div></div>
+<div class="summary-panel" id="summaryPanel" aria-label="Selected stock summary">
+<div class="summary-metric"><small>Latest close</small><strong id="summaryClose">—</strong><span class="summary-sub" id="summaryDate">No data loaded</span></div>
+<div class="summary-metric"><small>EMA 10</small><strong id="summaryEma10">—</strong><span class="summary-sub" id="summaryDist10">—</span></div>
+<div class="summary-metric"><small>EMA 20</small><strong id="summaryEma20">—</strong><span class="summary-sub" id="summaryDist20">—</span></div>
+<div class="summary-metric"><small>EMA 50</small><strong id="summaryEma50">—</strong><span class="summary-sub" id="summaryDist50">—</span></div>
+<div class="summary-metric"><small>EMA 200</small><strong id="summaryEma200">—</strong><span class="summary-sub" id="summaryDist200">—</span></div>
+<div class="summary-metric summary-trend"><small>Trend / decision</small><strong id="summaryTrend">Awaiting data</strong><span class="summary-sub" id="summaryDecision">Not reviewed</span></div>
+</div>
 <div class="chartbox" id="chartbox"><div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div></div>
 <div class="foot"><div class="row"><button id="keepBtn" class="good" disabled>✓ Keep <span class="key">K</span></button><button id="skipBtn" class="bad" disabled>✕ Skip <span class="key">S</span></button><button id="laterBtn" class="warn" disabled>◷ Later <span class="key">L</span></button></div><div class="row"><span class="muted" id="position">0 / 0</span><button id="nextUndecided" disabled>Next undecided ↓</button></div></div>
 <div class="notice">Daily historical candles with EMA 10/20/50/200 and volume. Launch this page using start_swing_review.bat so the local data helper can retrieve history. Not live data.</div>
@@ -220,6 +252,7 @@ function drawChart(bars,ticker,status){
  const el=$('dailyChart');if(!el||!window.LightweightCharts){setChartStatus('Chart library did not load. Check internet and reload this page.');return}
  const staleOverlay=el.querySelector('.drawing-overlay');if(staleOverlay)staleOverlay.remove();drawingOverlay=null;if(chart){try{chart.remove()}catch(e){}}if(chartResizeObserver)chartResizeObserver.disconnect();
  chartDisplayedBars=bars;
+ renderSummary(current());
  const theme=darkMode?{background:'#000000',text:'#d4d4d4',grid:'#1f1f1f',border:'#303030',crosshair:'#737373'}:{background:'#ffffff',text:'#64748b',grid:'#e8edf5',border:'#e2e8f0',crosshair:'#94a3b8'};
  chart=LightweightCharts.createChart(el,{width:el.clientWidth||900,height:el.clientHeight||470,layout:{background:{type:LightweightCharts.ColorType.Solid,color:theme.background},textColor:theme.text,fontFamily:'Inter, system-ui, sans-serif',fontSize:12},grid:{vertLines:{visible:!!chartPrefs.grid,color:theme.grid},horzLines:{visible:!!chartPrefs.grid,color:theme.grid}},rightPriceScale:{borderColor:theme.border,textColor:theme.text},timeScale:{borderColor:theme.border,timeVisible:false,secondsVisible:false},crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:theme.crosshair,width:1,style:LightweightCharts.LineStyle.Dashed},horzLine:{color:theme.crosshair,width:1,style:LightweightCharts.LineStyle.Dashed}}});
  candleSeries=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:chartPrefs.bull,downColor:chartPrefs.bear,borderVisible:false,wickUpColor:chartPrefs.bull,wickDownColor:chartPrefs.bear,borderUpColor:chartPrefs.bull,borderDownColor:chartPrefs.bear});
@@ -267,13 +300,81 @@ async function loadDailyData(ticker,force=false){
   if(current()?.ticker===ticker){drawChart(bars,ticker,'Loaded '+bars.length+' daily candles · 2-year history · latest '+bars[bars.length-1].time);$('chartMessage').innerHTML='Historical data via local Python helper and Yahoo Finance. Daily history is not guaranteed to be real-time and may be rate-limited. Verify important levels with your primary data source. Charts powered by <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.'}
  }catch(err){if(current()?.ticker===ticker){setChartStatus('Automatic data unavailable');$('chartMessage').innerHTML='Could not retrieve daily candles for <b>'+ticker.replace(/</g,'&lt;')+'</b> ('+String(err.message).replace(/</g,'&lt;')+'). You can click Reload daily data to retry, or import a historical OHLCV CSV with Date, Open, High, Low, Close and Volume columns. <br><br><a href="'+chartURL(ticker)+'" target="_blank" rel="noopener noreferrer">Open full TradingView ↗</a>'}}
 }
-function render(){let s=current();renderWatchlist();let filtered=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes($('search').value.toLowerCase()));if(sortAZ)filtered.sort((a,b)=>a.ticker.localeCompare(b.ticker));$('stockList').innerHTML='';if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Import a CSV or change the search.</div>'}else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d||'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
-$('countStocks').textContent=stocks.length;$('countKeep').textContent=[...decisions.values()].filter(x=>x==='Keep').length;$('countSkip').textContent=[...decisions.values()].filter(x=>x==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
-$('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Decision: '+(decisions.get(s.ticker)||'Not reviewed');makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)}
+function emaSnapshot(bars){
+ if(!Array.isArray(bars)||!bars.length)return null;
+ const close=Number(bars[bars.length-1].close),last=bars[bars.length-1],emas={};
+ for(const period of [10,20,50,200]){const series=emaData(bars,period);emas[period]=series.length?Number(series[series.length-1].value):null}
+ return {close,date:last.time,emas};
+}
+function trendLabel(snapshot){
+ if(!snapshot)return 'Awaiting data';
+ const e=snapshot.emas,c=snapshot.close;
+ if([e[10],e[20],e[50],e[200]].every(Number.isFinite)){
+  if(c>e[10]&&e[10]>e[20]&&e[20]>e[50]&&e[50]>e[200])return 'Bullish alignment';
+  if(c<e[10]&&e[10]<e[20]&&e[20]<e[50]&&e[50]<e[200])return 'Bearish alignment';
+ }
+ if(Number.isFinite(e[20])&&Number.isFinite(e[50]))return c>e[20]&&e[20]>e[50]?'Bullish bias':c<e[20]&&e[20]<e[50]?'Bearish bias':'Mixed / transitional';
+ return 'Insufficient history';
+}
+function renderSummary(stock){
+ const snapshot=stock?emaSnapshot(chartDataByTicker.get(stock.ticker)):null;
+ const put=(id,value)=>{const el=$(id);if(el)el.textContent=value};
+ const putDist=(id,ema)=>{const el=$(id);if(!el)return;if(!snapshot||!Number.isFinite(ema)){el.textContent='Insufficient history';el.className='summary-sub neutral';return}const pct=(snapshot.close-ema)/ema*100;el.textContent=(pct>=0?'+':'')+pct.toFixed(2)+'% vs close';el.className='summary-sub '+(pct>0?'positive':pct<0?'negative':'neutral')};
+ if(!snapshot){put('summaryClose','—');put('summaryDate','No history loaded for this ticker');for(const p of [10,20,50,200]){put('summaryEma'+p,'—');putDist('summaryDist'+p,null)}put('summaryTrend','Awaiting data');put('summaryDecision',stock?(decisions.get(stock.ticker)||'Not reviewed'):'Not reviewed');return}
+ put('summaryClose',Number.isFinite(snapshot.close)?snapshot.close.toFixed(2):'—');put('summaryDate',snapshot.date||'Latest bar');
+ for(const p of [10,20,50,200]){const e=snapshot.emas[p];put('summaryEma'+p,Number.isFinite(e)?e.toFixed(2):'Not enough bars');putDist('summaryDist'+p,e)}
+ const trend=trendLabel(snapshot);put('summaryTrend',trend);const trendEl=$('summaryTrend');if(trendEl)trendEl.className=trend.toLowerCase().includes('bullish')?'positive':trend.toLowerCase().includes('bearish')?'negative':'neutral';
+ put('summaryDecision',decisions.get(stock.ticker)||'Not reviewed');
+}
+function matchesEMAFilter(stock,filter){
+ if(filter==='all')return true;
+ const snapshot=emaSnapshot(chartDataByTicker.get(stock.ticker));if(!snapshot)return false;
+ const e=snapshot.emas,c=snapshot.close;
+ if(filter==='bullish')return [e[10],e[20],e[50],e[200]].every(Number.isFinite)&&c>e[10]&&e[10]>e[20]&&e[20]>e[50]&&e[50]>e[200];
+ if(filter==='bearish')return [e[10],e[20],e[50],e[200]].every(Number.isFinite)&&c<e[10]&&e[10]<e[20]&&e[20]<e[50]&&e[50]<e[200];
+ const match=filter.match(/^(above|below)(10|20|50|200)$/);if(!match)return true;
+ const ema=e[Number(match[2])];if(!Number.isFinite(ema))return false;
+ return match[1]==='above'?c>ema:c<ema;
+}
+async function scanEMAData(){
+ if(!['127.0.0.1','localhost'].includes(location.hostname)||location.port!=='8765'||location.protocol!=='http:'){alert('Open the desk at http://127.0.0.1:8765 to load EMA data.');return}
+ if(!stocks.length){alert('Import scanner CSV files first.');return}
+ if(stocks.length>30&&!confirm('This will request historical data for '+stocks.length+' stocks sequentially and may take several minutes. Continue?'))return;
+ const button=$('scanEMAData');button.disabled=true;let loaded=0,failed=0;
+ try{
+  for(let i=0;i<stocks.length;i++){
+   const stock=stocks[i];if(chartDataByTicker.has(stock.ticker)){loaded++;continue}
+   $('filterStatus').textContent='Loading EMA history '+(i+1)+' / '+stocks.length+' · '+stock.ticker+' · '+loaded+' available, '+failed+' failed';
+   try{
+    const params=new URLSearchParams({symbol:yahooSymbol(stock.ticker),period:'2y'});
+    const data=await requestLocalHistory(new URL('/api/history?'+params.toString(),location.href).toString());
+    if(Array.isArray(data?.bars)&&data.bars.length){chartDataByTicker.set(stock.ticker,data.bars);loaded++}else failed++;
+   }catch(err){failed++}
+  }
+ }finally{
+  button.disabled=false;$('filterStatus').textContent='EMA scan finished: '+loaded+' stocks have history, '+failed+' failed or unavailable. EMA filters exclude stocks without loaded data.';
+  render();
+ }
+}
+function render(){
+ const s=current();renderWatchlist();
+ const query=$('search').value.toLowerCase(),decisionFilter=$('decisionFilter').value,emaFilter=$('emaFilter').value;
+ let filtered=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes(query));
+ if(decisionFilter==='unreviewed')filtered=filtered.filter(x=>!decisions.has(x.ticker));else if(decisionFilter!=='all')filtered=filtered.filter(x=>decisions.get(x.ticker)===decisionFilter);
+ if(emaFilter!=='all')filtered=filtered.filter(x=>matchesEMAFilter(x,emaFilter));
+ if(sortAZ)filtered.sort((a,b)=>a.ticker.localeCompare(b.ticker));
+ $('stockList').innerHTML='';
+ if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Try changing filters or load EMA data for the list.</div>'}
+ else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d||'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
+ $('countStocks').textContent=stocks.length;$('countKeep').textContent=[...decisions.values()].filter(x=>x==='Keep').length;$('countSkip').textContent=[...decisions.values()].filter(x=>x==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';
+ if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';renderSummary(null);$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
+ $('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Decision: '+(decisions.get(s.ticker)||'Not reviewed');
+ renderSummary(s);makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)
+}
 function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);if(d!=='Later'){}render()}function next(){if(active<stocks.length-1){active++;render()}}function prev(){if(active>0){active--;render()}}function nextUndecided(){if(!stocks.length)return;for(let n=1;n<=stocks.length;n++){let i=(active+n)%stocks.length;if(!decisions.has(stocks[i].ticker)){active=i;render();return}}alert('All stocks have a decision. You can export or clear decisions.')}
 function exportCSV(mode){let list=stocks.filter(s=>mode==='keep'?decisions.get(s.ticker)==='Keep':decisions.has(s.ticker));if(mode==='all')list=stocks.filter(s=>decisions.has(s.ticker));if(mode==='keep'&&!list.length){alert('No stocks marked Keep yet.');return}const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';let csv=[['Ticker','Decision','Scanner(s)','TradingView URL'].map(esc).join(','),...list.map(s=>[s.ticker,decisions.get(s.ticker)||'',s.scanners.join('; '),'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(s.ticker)].map(esc).join(','))].join('\r\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=mode==='keep'?'swing_kept_stocks.csv':'swing_review_decisions.csv';a.click();URL.revokeObjectURL(url)}
 $('themeToggle').addEventListener('click',toggleTheme);applyTheme();
 $('files').addEventListener('change',async e=>{const selected=[...e.target.files];for(const f of selected){try{addCSV(f.name,await f.text());filesLoaded++}catch(err){alert('Could not read '+f.name+': '+err.message)}}if(stocks.length){stocks.sort((a,b)=>a.ticker.localeCompare(b.ticker));active=0}render();e.target.value=''});
-$('market').addEventListener('change',()=>{if(stocks.length){stocks=stocks.map(s=>({...s,ticker:s.ticker.includes(':')?s.ticker:$('market').value+':'+s.ticker}));render()}});$('search').addEventListener('input',render);$('addWatchTicker').onclick=addWatchlistTicker;$('watchTickerInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWatchlistTicker()}});$('watchToggle').onclick=toggleCurrentWatchlist;$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('exportKeep').onclick=()=>exportCSV('keep');$('exportAll').onclick=()=>exportCSV('all');$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();render()}};
+$('market').addEventListener('change',()=>{if(stocks.length){stocks=stocks.map(s=>({...s,ticker:s.ticker.includes(':')?s.ticker:$('market').value+':'+s.ticker}));render()}});$('search').addEventListener('input',render);$('decisionFilter').addEventListener('change',render);$('emaFilter').addEventListener('change',render);$('scanEMAData').addEventListener('click',scanEMAData);$('addWatchTicker').onclick=addWatchlistTicker;$('watchTickerInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWatchlistTicker()}});$('watchToggle').onclick=toggleCurrentWatchlist;$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('exportKeep').onclick=()=>exportCSV('keep');$('exportAll').onclick=()=>exportCSV('all');$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();render()}};
 document.addEventListener('keydown',e=>{if(e.altKey&&!e.ctrlKey&&!e.metaKey&&e.key.toLowerCase()==='r'){e.preventDefault();resetChartView();return}if(e.key==='Escape'&&drawingTool!=='cursor'){selectDrawingTool('cursor');pendingAnchor=null;mousePoint=null;drawDrawingOverlay();return}if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(e.key==='ArrowDown'){e.preventDefault();next()}else if(e.key==='ArrowUp'){e.preventDefault();prev()}else if(e.key.toLowerCase()==='k')setDecision('Keep');else if(e.key.toLowerCase()==='s')setDecision('Skip');else if(e.key.toLowerCase()==='l')setDecision('Later');else if(e.key==='Enter')next()});render();
 </script></body></html>
