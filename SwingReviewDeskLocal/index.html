@@ -209,6 +209,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
  .notes-grid textarea.field{min-height:34px}
  .notes-save-status{font-size:8px}
 }
+
+/* Local JSON backup / restore controls */
+.backup-actions{display:flex;gap:5px;margin-top:3px}
+.backup-actions button{flex:1;min-width:0;padding:5px 7px;font-size:10px;border-radius:7px;box-shadow:none}
+.backup-status{font-size:9px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
+@media(min-width:901px){.backup-actions{gap:4px;margin-top:1px}.backup-actions button{padding:3px 6px;font-size:9px}.backup-status{font-size:8px;line-height:1.2}}
+
 </style></head>
 <body>
 <header><div><h1>⚡ Swing Review Desk</h1><small>Scanner review · Daily price action · Trend filters</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="exportKeep">Export kept</button><button id="exportAll">Export all decisions</button></div></header>
@@ -225,6 +232,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 </div><div class="filter-status" id="filterStatus">EMA filters use data loaded in this session. Load EMA data to scan the full imported list.</div>
 <div class="row sidebar-list-actions"><button id="sortName" title="Sort imported stocks alphabetically">Sort A–Z</button><button id="clearDecisions" title="Clear all current review decisions">Clear decisions</button></div>
 <div class="stats"><div class="stat"><small>Stocks</small><b id="countStocks">0</b></div><div class="stat"><small>Kept</small><b id="countKeep" style="color:var(--green)">0</b></div><div class="stat"><small>Skipped</small><b id="countSkip" style="color:var(--red)">0</b></div></div>
+<div class="backup-actions">
+<button id="exportBackup" type="button" title="Download a JSON backup of decisions, notes, watchlist, chart settings and drawings">↓ Backup</button>
+<button id="importBackup" type="button" title="Restore saved Swing Review Desk data from a JSON backup">Restore</button>
+<input id="backupFile" type="file" accept=".json,application/json" hidden>
+</div>
+<div class="backup-status" id="backupStatus" aria-live="polite">Back up your notes and chart drawings regularly.</div>
 </div>
 <div class="watchlist-section"><div class="row between"><b class="section-title">My Watchlist</b><span class="pill" id="watchCount">0 saved</span></div><div class="watchlist-add"><input class="field" id="watchTickerInput" placeholder="Ticker, e.g. RELIANCE" aria-label="Ticker to add to My Watchlist"><button id="addWatchTicker" class="primary">＋ Add</button></div><div class="watchlist-list" id="myWatchlist"><div class="pad muted">Save a stock using ☆ Add to Watchlist.</div></div></div><div class="list" id="stockList"><div class="pad muted">Import CSV files to begin.</div></div>
 <div class="notice">Keyboard: <span class="key">↑</span>/<span class="key">↓</span> navigate · <span class="key">K</span> keep · <span class="key">S</span> skip · <span class="key">L</span> later · <span class="key">Alt+R</span> reset chart</div>
@@ -511,6 +524,126 @@ function saveResearchNote(){
  const status=$('notesSaveStatus');
  if(saveReviewState()){if(status)status.textContent='Saved locally for '+stock.ticker+' · '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
 }
+
+function setBackupStatus(message){
+ const el=$('backupStatus');if(el)el.textContent=message;
+}
+function isRecord(value){return !!value&&typeof value==='object'&&!Array.isArray(value)}
+function isBackupTicker(value){return typeof value==='string'&&value.length<=100&&/^[A-Z0-9^._&+=-]+:[A-Z0-9^._&+=-]+$/i.test(value)}
+function cleanBackupAnchor(value){
+ if(!isRecord(value)||typeof value.time!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value.time))return null;
+ const price=Number(value.price);if(!Number.isFinite(price)||price<=0)return null;
+ return {time:value.time,price};
+}
+function sanitizeBackupDrawing(value){
+ if(!isRecord(value))return null;
+ const types=['horizontal','trendline','ray','rectangle','fib-retracement','fib-extension','text','ruler'];
+ if(!types.includes(value.type))return null;
+ const a=cleanBackupAnchor(value.a);if(!a)return null;
+ if(value.type==='horizontal')return {type:value.type,a};
+ if(value.type==='text'){
+  const text=String(value.text||'').trim().slice(0,160);return text?{type:value.type,a,text}:null;
+ }
+ const b=cleanBackupAnchor(value.b);return b?{type:value.type,a,b}:null;
+}
+function sanitizeBackup(payload){
+ if(!isRecord(payload)||payload.format!=='SwingReviewDeskBackup'||payload.schemaVersion!==1||!isRecord(payload.data))throw new Error('This is not a supported Swing Review Desk backup (version 1).');
+ const data=payload.data;
+ if(!isRecord(data.reviewState)||!isRecord(data.reviewState.decisions)||!isRecord(data.reviewState.notes)||!Array.isArray(data.watchlist)||!isRecord(data.chartPrefs)||!isRecord(data.drawings)||!['dark','light'].includes(data.theme))throw new Error('The backup is missing required data or has an invalid structure.');
+ const cleanDecisions={};
+ for(const [ticker,value] of Object.entries(data.reviewState.decisions)){
+  if(isBackupTicker(ticker)&&['Keep','Skip','Later'].includes(value))cleanDecisions[ticker.toUpperCase()]=value;
+ }
+ const cleanNotes={};
+ for(const [ticker,note] of Object.entries(data.reviewState.notes)){
+  if(!isBackupTicker(ticker)||!isRecord(note))continue;
+  cleanNotes[ticker.toUpperCase()]={
+   setupType:String(note.setupType||'').slice(0,80),
+   trendContext:String(note.trendContext||'').slice(0,2000),
+   entryRationale:String(note.entryRationale||'').slice(0,2000),
+   invalidation:String(note.invalidation||'').slice(0,200),
+   reviewDate:String(note.reviewDate||'').slice(0,20),
+   status:String(note.status||'Draft').slice(0,40),
+   updatedAt:String(note.updatedAt||'').slice(0,40)
+  };
+ }
+ const cleanWatchlist=[...new Set(data.watchlist.map(x=>String(x||'').trim().toUpperCase()).filter(x=>/^[A-Z0-9._&-]+:[A-Z0-9._&-]+$/.test(x)))];
+ const prefs={...defaultChartPrefs};
+ if(typeof data.chartPrefs.grid==='boolean')prefs.grid=data.chartPrefs.grid;
+ for(const key of ['ema10','ema20','ema50','ema200','bull','bear']){
+  const value=data.chartPrefs[key];
+  if(typeof value==='string'&&/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value))prefs[key]=value;
+ }
+ const cleanDrawings={};
+ for(const [ticker,items] of Object.entries(data.drawings)){
+  if(!isBackupTicker(ticker)||!Array.isArray(items))continue;
+  cleanDrawings[ticker.toUpperCase()]=items.slice(0,1000).map(sanitizeBackupDrawing).filter(Boolean);
+ }
+ return {
+  reviewState:{version:1,decisions:cleanDecisions,notes:cleanNotes},
+  watchlist:cleanWatchlist,
+  chartPrefs:prefs,
+  drawings:cleanDrawings,
+  theme:data.theme
+ };
+}
+function exportBackup(){
+ const payload={
+  format:'SwingReviewDeskBackup',
+  schemaVersion:1,
+  exportedAt:new Date().toISOString(),
+  data:{
+   reviewState:{version:1,decisions:Object.fromEntries(decisions),notes:reviewState.notes},
+   watchlist:myWatchlist,
+   chartPrefs:chartPrefs,
+   drawings:drawingsByTicker,
+   theme:darkMode?'dark':'light'
+  }
+ };
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a'),date=new Date().toISOString().slice(0,10);
+ a.href=url;a.download='swing_review_desk_backup_'+date+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ setBackupStatus('Backup downloaded · '+date+'. Keep the file somewhere safe.');
+}
+async function importBackupFile(file){
+ let payload;
+ try{payload=JSON.parse(await file.text())}catch(e){throw new Error('That file is not valid JSON. Choose a Swing Review Desk backup file.')}
+ const clean=sanitizeBackup(payload);
+ const detail='This will replace the saved decisions, research notes, watchlist, chart settings, drawings and theme in this browser. It cannot be undone from inside the app. Continue?';
+ if(!confirm(detail))return false;
+ const keys={
+  review:'swingReviewStateV1',
+  watchlist:'swingReviewMyWatchlist',
+  prefs:'swingReviewChartPrefs',
+  drawings:'swingReviewDrawings',
+  theme:'swingReviewTheme'
+ };
+ const next={
+  [keys.review]:JSON.stringify(clean.reviewState),
+  [keys.watchlist]:JSON.stringify(clean.watchlist),
+  [keys.prefs]:JSON.stringify(clean.chartPrefs),
+  [keys.drawings]:JSON.stringify(clean.drawings),
+  [keys.theme]:clean.theme
+ };
+ const previous={};for(const key of Object.values(keys))previous[key]=localStorage.getItem(key);
+ try{
+  for(const [key,value] of Object.entries(next))localStorage.setItem(key,value);
+ }catch(err){
+  for(const [key,value] of Object.entries(previous)){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value)}catch(rollbackError){}}
+  throw new Error('Browser storage could not save the backup. Previous saved data was kept where possible. Check available browser storage and try again.');
+ }
+ reviewState.version=1;reviewState.decisions=clean.reviewState.decisions;reviewState.notes=clean.reviewState.notes;
+ decisions.clear();for(const [ticker,value] of Object.entries(clean.reviewState.decisions))decisions.set(ticker,value);
+ myWatchlist=clean.watchlist;
+ chartPrefs=clean.chartPrefs;
+ drawingsByTicker=clean.drawings;
+ darkMode=clean.theme==='dark';
+ applyTheme();
+ render();
+ setBackupStatus('Backup restored successfully. Re-import your scanner CSVs if needed.');
+ return true;
+}
+
 function matchesEMAFilter(stock,filter){
  if(filter==='all')return true;
  const snapshot=emaSnapshot(chartDataByTicker.get(stock.ticker));if(!snapshot)return false;
@@ -559,6 +692,13 @@ function render(){
 function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);saveReviewState();render()}function next(){if(active<stocks.length-1){active++;render()}}function prev(){if(active>0){active--;render()}}function nextUndecided(){if(!stocks.length)return;for(let n=1;n<=stocks.length;n++){let i=(active+n)%stocks.length;if(!decisions.has(stocks[i].ticker)){active=i;render();return}}alert('All stocks have a decision. You can export or clear decisions.')}
 function exportCSV(mode){let list=stocks.filter(s=>mode==='keep'?decisions.get(s.ticker)==='Keep':decisions.has(s.ticker));if(mode==='all')list=stocks.filter(s=>decisions.has(s.ticker));if(mode==='keep'&&!list.length){alert('No stocks marked Keep yet.');return}const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';let csv=[['Ticker','Decision','Scanner(s)','TradingView URL'].map(esc).join(','),...list.map(s=>[s.ticker,decisions.get(s.ticker)||'',s.scanners.join('; '),'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(s.ticker)].map(esc).join(','))].join('\r\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=mode==='keep'?'swing_kept_stocks.csv':'swing_review_decisions.csv';a.click();URL.revokeObjectURL(url)}
 $('themeToggle').addEventListener('click',toggleTheme);applyTheme();
+$('exportBackup').addEventListener('click',exportBackup);
+$('importBackup').addEventListener('click',()=>$('backupFile').click());
+$('backupFile').addEventListener('change',async e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ try{await importBackupFile(file)}catch(err){setBackupStatus('Restore failed: '+err.message);alert('Could not restore backup: '+err.message)}
+ e.target.value='';
+});
 $('noteSetupType').addEventListener('change',saveResearchNote);$('noteStatus').addEventListener('change',saveResearchNote);$('noteReviewDate').addEventListener('change',saveResearchNote);
 $('noteTrendContext').addEventListener('input',saveResearchNote);$('noteEntryRationale').addEventListener('input',saveResearchNote);$('noteInvalidation').addEventListener('input',saveResearchNote);
 $('files').addEventListener('change',async e=>{const selected=[...e.target.files];for(const f of selected){try{addCSV(f.name,await f.text());filesLoaded++}catch(err){alert('Could not read '+f.name+': '+err.message)}}if(stocks.length){stocks.sort((a,b)=>a.ticker.localeCompare(b.ticker));active=0}render();e.target.value=''});
