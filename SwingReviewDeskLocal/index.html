@@ -216,6 +216,121 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .backup-status{font-size:9px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
 @media(min-width:901px){.backup-actions{gap:4px;margin-top:1px}.backup-actions button{padding:3px 6px;font-size:9px}.backup-status{font-size:8px;line-height:1.2}}
 
+
+/* Premium visual pass: calm contrast, consistent surfaces, sharper hierarchy. */
+:root{
+  --accent:#5148e5;
+  --accent-soft:#eef2ff;
+  --line:#e2e8f0;
+  --shadow:0 10px 28px rgba(15,23,42,.055);
+}
+body{letter-spacing:.005em}
+header{
+  border-bottom:1px solid var(--line);
+  box-shadow:0 5px 18px rgba(15,23,42,.035);
+  position:relative;
+  z-index:25;
+}
+header h1{letter-spacing:-.65px;font-weight:820}
+header small{letter-spacing:.025em;color:var(--muted)}
+.panel{border-radius:13px;box-shadow:var(--shadow);border-color:var(--line)}
+.section-title{letter-spacing:.015em}
+button{
+  border-radius:8px;
+  font-weight:650;
+  transition:background .14s ease,border-color .14s ease,color .14s ease;
+}
+button:active{transform:none}
+.primary{box-shadow:0 3px 9px rgba(79,70,229,.13)}
+.field{border-radius:8px;transition:border-color .14s ease,box-shadow .14s ease}
+.stats{gap:5px}
+.stat{border-radius:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)}
+.stock{border-left:2px solid transparent;transition:background .12s ease,border-color .12s ease}
+.stock.active{border-left-color:var(--accent);box-shadow:none;padding-left:11px}
+.stock .name{letter-spacing:.015em}
+.decision{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:99px;
+  padding:2px 6px;
+  line-height:1.25;
+  letter-spacing:.025em;
+  background:transparent;
+}
+.decision.keep{background:rgba(21,128,61,.09)}
+.decision.skip{background:rgba(220,38,38,.08)}
+.decision.later{background:rgba(180,83,9,.09)}
+.pill{letter-spacing:.035em}
+.topline{border-bottom-color:var(--line)}
+.ticker{font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+.summary-panel{gap:5px}
+.summary-metric{border-radius:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.summary-metric strong{font-variant-numeric:tabular-nums;letter-spacing:-.15px}
+.chart-toolbar,.drawing-toolbar{border-color:var(--line)}
+.chart-toolbar button,.drawing-toolbar button{border-radius:7px}
+.drawing-toolbar .draw-tool.active{box-shadow:inset 0 0 0 1px rgba(79,70,229,.12)}
+.chart-legend{gap:6px}
+.chart-legend span{padding:2px 4px;border-radius:5px}
+.research-notes>summary{transition:background .12s ease}
+.research-notes>summary:hover{background:var(--accent-soft)}
+.backup-actions button{font-weight:650}
+.watch-item{border-radius:6px}
+.watch-remove{border-radius:6px}
+:root[data-theme="dark"]{
+  --accent:#8b83ff;
+  --accent-soft:#141421;
+  --line:#262626;
+  --shadow:0 12px 28px rgba(0,0,0,.28);
+}
+:root[data-theme="dark"] header{
+  background:#050505;
+  border-bottom-color:#242424;
+  box-shadow:0 6px 24px rgba(0,0,0,.24);
+}
+:root[data-theme="dark"] .panel{background:#050505;border-color:#242424;box-shadow:0 10px 30px rgba(0,0,0,.24)}
+:root[data-theme="dark"] .stat{
+  background:#090909;
+  border-color:#292929;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+:root[data-theme="dark"] .stock.active{
+  background:#12121b;
+  border-left-color:#8b83ff;
+}
+:root[data-theme="dark"] .stock.active .name{color:#c8c4ff}
+:root[data-theme="dark"] .decision.keep{background:rgba(74,222,128,.10);color:#7ee7a2}
+:root[data-theme="dark"] .decision.skip{background:rgba(248,113,113,.10);color:#ff9999}
+:root[data-theme="dark"] .decision.later{background:rgba(251,191,36,.10);color:#fcd46c}
+:root[data-theme="dark"] .pill{background:#15151b;border-color:#30303b;color:#c8c4ff}
+:root[data-theme="dark"] .summary-metric{background:#080808;border-color:#282828;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+:root[data-theme="dark"] .review-filters .field,
+:root[data-theme="dark"] .field{
+  background:#080808;
+  border-color:#2d2d2d;
+}
+:root[data-theme="dark"] .field:focus{
+  border-color:#7770df;
+  box-shadow:0 0 0 2px rgba(139,131,255,.13);
+}
+:root[data-theme="dark"] button{box-shadow:none}
+:root[data-theme="dark"] button:hover{border-color:#55516f}
+:root[data-theme="dark"] .primary{
+  background:#6259ed;
+  border-color:#756df6;
+  color:#fff;
+}
+:root[data-theme="dark"] .primary:hover{background:#756df6}
+:root[data-theme="dark"] .research-notes>summary:hover{background:#11111a}
+:root[data-theme="dark"] .chart-legend span{background:rgba(255,255,255,.025)}
+@media(max-width:900px){
+  .panel{border-radius:11px}
+  header{box-shadow:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+}
+
 </style></head>
 <body>
 <header><div><h1>⚡ Swing Review Desk</h1><small>Scanner review · Daily price action · Trend filters</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="exportKeep">Export kept</button><button id="exportAll">Export all decisions</button></div></header>
