@@ -374,6 +374,29 @@ button:active{transform:none}
 .selection-export-status{font-size:9px;line-height:1.2;max-width:150px;color:var(--muted);white-space:normal}
 @media(max-width:900px){.selection-export-status{width:100%;max-width:none}}
 
+
+/* Fix: make the stock list the independently scrollable flex child of the sidebar. */
+@media (min-width:901px){
+  .wrap>aside{min-height:0;overflow:hidden}
+  .wrap>aside>.pad{flex:0 0 auto;min-height:0}
+  .wrap>aside>#stockList{
+    display:block;
+    flex:1 1 0;
+    min-height:0;
+    height:0;
+    max-height:none;
+    overflow-y:scroll;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+    -webkit-overflow-scrolling:touch;
+  }
+  .wrap>aside>.notice{flex:0 0 auto}
+}
+@media (max-width:900px){
+  #stockList{max-height:320px;min-height:130px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+}
+
 </style></head>
 <body>
 <header><div><h1>⚡ Swing Review Desk</h1><small>CSV stock review · Chart + EMAs · Kite shortlist</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="copySelected" title="Copy selected stock symbols so you can add them to Kite">Copy for Kite</button><button id="exportKeep" title="Download the selected stocks as a reference CSV">Export selected</button><small class="selection-export-status" id="selectionExportStatus" aria-live="polite"></small></div></header>
