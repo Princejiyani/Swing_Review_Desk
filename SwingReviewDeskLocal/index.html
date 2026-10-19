@@ -424,6 +424,45 @@ button:active{transform:none}
   }
 }
 
+
+/* Final scroll override: give the stock list a concrete viewport-based height. */
+@media (min-width:901px){
+  .wrap{grid-template-rows:minmax(0,1fr)!important}
+  .wrap>aside{height:100%!important;min-height:0!important;overflow:hidden!important}
+  .wrap>aside>.pad{flex:0 0 auto!important}
+  .wrap>aside>#stockList{
+    display:block!important;
+    flex:0 0 auto!important;
+    height:calc(100vh - 440px)!important;
+    min-height:140px!important;
+    max-height:calc(100vh - 440px)!important;
+    overflow-y:scroll!important;
+    overflow-x:hidden!important;
+    overscroll-behavior-y:contain!important;
+    scrollbar-gutter:stable;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
+  .wrap>aside>.notice{flex:0 0 auto!important}
+}
+@media (max-width:900px){
+  #stockList{
+    display:block!important;
+    height:auto!important;
+    min-height:120px!important;
+    max-height:42vh!important;
+    overflow-y:scroll!important;
+    overflow-x:hidden!important;
+    overscroll-behavior-y:contain!important;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
+}
+#stockList::-webkit-scrollbar{width:10px}
+#stockList::-webkit-scrollbar-track{background:transparent}
+#stockList::-webkit-scrollbar-thumb{background:#929cb0;border:2px solid transparent;border-radius:10px;background-clip:padding-box}
+:root[data-theme="dark"] #stockList::-webkit-scrollbar-thumb{background:#666;border:2px solid transparent;background-clip:padding-box}
+
 </style></head>
 <body>
 <header><div><h1>⚡ Swing Review Desk</h1><small>CSV stock review · Chart + EMAs · Kite shortlist</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="copySelected" title="Copy selected stock symbols so you can add them to Kite">Copy for Kite</button><button id="exportKeep" title="Download the selected stocks as a reference CSV">Export selected</button><small class="selection-export-status" id="selectionExportStatus" aria-live="polite"></small></div></header>
@@ -987,6 +1026,14 @@ async function copySelectedSymbols(){
  else {window.prompt('Copy these symbols and search them in Kite:',text);if(status)status.textContent='Copy symbols from the dialog'}
 }
 $('themeToggle').addEventListener('click',toggleTheme);applyTheme();
+// Keep the wheel gesture inside the stock list rather than letting the fixed workspace swallow it.
+$('stockList').addEventListener('wheel',e=>{
+ const list=e.currentTarget;
+ if(list.scrollHeight<=list.clientHeight)return;
+ e.preventDefault();
+ list.scrollTop+=e.deltaY;
+},{passive:false});
+
 $('copySelected').addEventListener('click',copySelectedSymbols);$('exportKeep').addEventListener('click',exportCSV);
 $('files').addEventListener('change',async e=>{const selected=[...e.target.files];for(const f of selected){try{addCSV(f.name,await f.text());filesLoaded++}catch(err){alert('Could not read '+f.name+': '+err.message)}}if(stocks.length){stocks.sort((a,b)=>a.ticker.localeCompare(b.ticker));active=0}render();e.target.value=''});
 $('search').addEventListener('input',render);$('decisionFilter').addEventListener('change',render);$('emaFilter').addEventListener('change',render);$('scanEMAData').addEventListener('click',scanEMAData);$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();saveReviewState();render()}};
