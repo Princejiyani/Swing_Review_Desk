@@ -410,7 +410,7 @@ button:active{transform:none}
 </main>
 </div>
 <script>
-const $=id=>document.getElementById(id);let stocks=[],active=0,filesLoaded=0,sortAZ=false;
+const $=id=>document.getElementById(id);let stocks=[],visibleStocks=[],active=0,filesLoaded=0,sortAZ=false;
 function readReviewState(){
  const empty={version:1,decisions:{},notes:{},riskPlans:{}};
  try{
@@ -472,7 +472,7 @@ function parseCSV(text){let rows=[],row=[],cell='',quoted=false;for(let i=0;i<te
 function normTicker(raw){let s=String(raw||'').trim().replace(/^['"]|['"]$/g,'').toUpperCase();if(!s)return '';s=s.replace(/\s+/g,'');if(s.includes(':'))return s;return 'NSE:'+s}
 function findTickerCol(headers){const opts=['symbol','ticker','tradingsymbol','trading symbol','stock','stock name','name','company','company name','nse code','bse code','code'];let h=headers.map(x=>x.trim().toLowerCase());for(const o of opts){let i=h.indexOf(o);if(i>=0)return i}return -1}
 function addCSV(filename,text){const rows=parseCSV(text);if(!rows.length)return;let headers=rows[0].map(x=>x.trim()),col=findTickerCol(headers),start=1;if(col<0){col=0;start=0}const scanner=filename.replace(/\.csv$/i,'');for(let r=start;r<rows.length;r++){let raw=(rows[r][col]||'').trim();if(!raw)continue;let ticker=normTicker(raw);if(!ticker||ticker.includes(' ')||/^(SYMBOL|TICKER|STOCK NAME|NAME)$/.test(ticker))continue;let key=ticker.toUpperCase();let existing=stocks.find(s=>s.ticker===key);if(existing){if(!existing.scanners.includes(scanner))existing.scanners.push(scanner)}else stocks.push({ticker:key,plain:key.split(':').pop(),scanners:[scanner],source:filename})}}
-function current(){return stocks[active]||null}
+function current(){const stock=stocks[active]||null;return stock&&visibleStocks.includes(stock)?stock:null}
 function chartURL(ticker){return 'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(ticker)}
 const defaultChartPrefs={grid:false,ema10:'#0d9488',ema20:'#f59e0b',ema50:'#2563eb',ema200:'#9333ea',bull:'#16a34a',bear:'#ef4444'};
 function readChartPrefs(){try{return {...defaultChartPrefs,...JSON.parse(localStorage.getItem('swingReviewChartPrefs')||'{}')}}catch(e){return {...defaultChartPrefs}}}
@@ -895,12 +895,16 @@ function displayDecision(value){
 }
 
 function render(){
- const s=current();renderWatchlist();
+ renderWatchlist();
  const query=$('search').value.toLowerCase(),decisionFilter=$('decisionFilter').value,emaFilter=$('emaFilter').value;
  let filtered=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes(query));
  if(decisionFilter==='unreviewed')filtered=filtered.filter(x=>!decisions.has(x.ticker));else if(decisionFilter!=='all')filtered=filtered.filter(x=>decisions.get(x.ticker)===decisionFilter);
  if(emaFilter!=='all')filtered=filtered.filter(x=>matchesEMAFilter(x,emaFilter));
  if(sortAZ)filtered.sort((a,b)=>a.ticker.localeCompare(b.ticker));
+ visibleStocks=filtered;
+ if(!visibleStocks.length)active=-1;
+ else if(!visibleStocks.includes(stocks[active]))active=stocks.indexOf(visibleStocks[0]);
+ const s=current();
  $('stockList').innerHTML='';
  if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Try changing filters or load EMA data for the list.</div>'}
  else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d?displayDecision(d):'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
@@ -910,12 +914,12 @@ function render(){
   if(rowRect.top<listRect.top)stockListEl.scrollTop-=listRect.top-rowRect.top;
   else if(rowRect.bottom>listRect.bottom)stockListEl.scrollTop+=rowRect.bottom-listRect.bottom;
  }
- $('countStocks').textContent=stocks.length;$('countKeep').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Keep').length;$('countSkip').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';
+ const visibleIndex=visibleStocks.indexOf(s);$('countStocks').textContent=stocks.length;$('countKeep').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Keep').length;$('countSkip').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=visibleIndex<=0;$('nextBtn').disabled=visibleIndex<0||visibleIndex>=visibleStocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=visibleStocks.length?(visibleIndex+1)+' / '+visibleStocks.length:'0 / 0';
  if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';renderSummary(null);renderResearchNotes(null);renderRiskPlan(null);$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
  $('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Status: '+displayDecision(decisions.get(s.ticker));
  renderSummary(s);renderResearchNotes(s);renderRiskPlan(s);makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)
 }
-function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);saveReviewState();render()}function next(){if(active<stocks.length-1){active++;render()}}function prev(){if(active>0){active--;render()}}function nextUndecided(){if(!stocks.length)return;for(let n=1;n<=stocks.length;n++){let i=(active+n)%stocks.length;if(!decisions.has(stocks[i].ticker)){active=i;render();return}}alert('All stocks have a decision. You can export or clear decisions.')}
+function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);saveReviewState();render()}function next(){const i=visibleStocks.indexOf(current());if(i>=0&&i<visibleStocks.length-1){active=stocks.indexOf(visibleStocks[i+1]);render()}}function prev(){const i=visibleStocks.indexOf(current());if(i>0){active=stocks.indexOf(visibleStocks[i-1]);render()}}function nextUndecided(){const currentIndex=visibleStocks.indexOf(current());if(currentIndex<0)return;for(let n=1;n<=visibleStocks.length;n++){let stock=visibleStocks[(currentIndex+n)%visibleStocks.length];if(!decisions.has(stock.ticker)){active=stocks.indexOf(stock);render();return}}alert('All visible stocks have a decision. You can export or clear decisions.')}
 function selectedStocksForKite(){return stocks.filter(s=>decisions.get(s.ticker)==='Keep')}
 function exportCSV(){
  const list=selectedStocksForKite();
