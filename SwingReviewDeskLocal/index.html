@@ -432,11 +432,11 @@ button:active{transform:none}
   .wrap>aside>.pad{flex:0 0 auto!important}
   .wrap>aside>#stockList{
     display:block!important;
-    flex:0 0 auto!important;
-    height:calc(100vh - 440px)!important;
-    min-height:140px!important;
-    max-height:calc(100vh - 440px)!important;
-    overflow-y:scroll!important;
+    flex:1 1 0!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow-y:auto!important;
     overflow-x:hidden!important;
     overscroll-behavior-y:contain!important;
     scrollbar-gutter:stable;
@@ -994,6 +994,12 @@ function render(){
  $('stockList').innerHTML='';
  if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Try changing filters or load EMA data for the list.</div>'}
  else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d?displayDecision(d):'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
+ const stockListEl=$('stockList'),activeRow=stockListEl.querySelector('.stock.active');
+ if(activeRow){
+  const rowTop=activeRow.offsetTop-stockListEl.offsetTop,rowBottom=rowTop+activeRow.offsetHeight;
+  if(rowTop<stockListEl.scrollTop)stockListEl.scrollTop=rowTop;
+  else if(rowBottom>stockListEl.scrollTop+stockListEl.clientHeight)stockListEl.scrollTop=rowBottom-stockListEl.clientHeight;
+ }
  $('countStocks').textContent=stocks.length;$('countKeep').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Keep').length;$('countSkip').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';
  if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';renderSummary(null);renderResearchNotes(null);renderRiskPlan(null);$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
  $('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Status: '+displayDecision(decisions.get(s.ticker));
