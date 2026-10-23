@@ -478,7 +478,7 @@ const defaultChartPrefs={grid:false,ema10:'#0d9488',ema20:'#f59e0b',ema50:'#2563
 function readChartPrefs(){try{return {...defaultChartPrefs,...JSON.parse(localStorage.getItem('swingReviewChartPrefs')||'{}')}}catch(e){return {...defaultChartPrefs}}}
 let chartPrefs=readChartPrefs();
 let darkMode=(()=>{try{return localStorage.getItem('swingReviewTheme')==='dark'}catch(e){return false}})();
-let chart=null,candleSeries=null,volumeSeries=null,emaSeries={},chartResizeObserver=null,chartDataByTicker=new Map(),chartLoadingTicker='',chartStatusText='',chartDisplayedBars=[];
+let chart=null,candleSeries=null,volumeSeries=null,emaSeries={},chartResizeObserver=null,chartDataByTicker=new Map(),emaHistoryState=new Map(),chartLoadingTicker='',chartStatusText='',chartDisplayedBars=[];
 let currentDrawingTicker='',drawingTool='cursor',pendingAnchor=null,mousePoint=null,drawingOverlay=null;
 function readDrawingStore(){try{const data=JSON.parse(localStorage.getItem('swingReviewDrawings')||'{}');return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch(e){return {}}}
 let drawingsByTicker=readDrawingStore();
@@ -605,22 +605,24 @@ async function requestLocalHistory(url){
  throw new Error('Cannot connect to the local data helper. Check that the black Command Prompt window is still open, and that this page is loaded from http://127.0.0.1:8765 (not by double-clicking index.html). Details: '+(lastError?.message||'network request failed'));
 }
 async function loadDailyData(ticker,force=false){
- if(!force&&chartDataByTicker.has(ticker)){drawChart(chartDataByTicker.get(ticker),ticker,'Loaded cached daily history');return}
+ if(!force&&chartDataByTicker.has(ticker)){emaHistoryState.set(ticker,'loaded');drawChart(chartDataByTicker.get(ticker),ticker,'Loaded cached daily history');return}
  if(!window.LightweightCharts){setChartStatus('Chart library did not load. Check internet connection.');return}
  if(!['127.0.0.1','localhost'].includes(location.hostname)||location.port!=='8765'||location.protocol!=='http:'){
   setChartStatus('Open the desk at http://127.0.0.1:8765');
   $('chartMessage').textContent='The local helper only works when the page is opened from http://127.0.0.1:8765. Do not double-click index.html.';
   return;
  }
- chartLoadingTicker=ticker;setChartStatus('Fetching daily history for '+ticker+' via local helper…');
+ chartLoadingTicker=ticker;emaHistoryState.set(ticker,'loading');setChartStatus('Fetching daily history for '+ticker+' via local helper…');
  try{
   const sym=yahooSymbol(ticker),params=new URLSearchParams({symbol:sym,period:'2y'});
   const data=await requestLocalHistory(new URL('/api/history?'+params.toString(),location.href).toString());
   const bars=Array.isArray(data?.bars)?data.bars:[];
   if(!bars.length)throw new Error(data?.error||('No daily data returned for '+sym));
-  chartDataByTicker.set(ticker,bars);
-  if(current()?.ticker===ticker){drawChart(bars,ticker,'Loaded '+bars.length+' daily candles · 2-year history · latest '+bars[bars.length-1].time);$('chartMessage').innerHTML='Historical data via local Python helper and Yahoo Finance. Daily history is not guaranteed to be real-time and may be rate-limited. Verify important levels with your primary data source. Charts powered by <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.'}
- }catch(err){if(current()?.ticker===ticker){setChartStatus('Automatic data unavailable');$('chartMessage').innerHTML='Could not retrieve daily candles for <b>'+ticker.replace(/</g,'&lt;')+'</b> ('+String(err.message).replace(/</g,'&lt;')+'). You can click Reload daily data to retry, or open the full TradingView chart. <br><br><a href="'+chartURL(ticker)+'" target="_blank" rel="noopener noreferrer">Open full TradingView ↗</a>'}}
+  chartDataByTicker.set(ticker,bars);emaHistoryState.set(ticker,'loaded');
+  if($('emaFilter').value!=='all')render();
+  else if(current()?.ticker===ticker)drawChart(bars,ticker,'Loaded '+bars.length+' daily candles · 2-year history · latest '+bars[bars.length-1].time);
+  if(current()?.ticker===ticker)$('chartMessage').innerHTML='Historical data via local Python helper and Yahoo Finance. Daily history is not guaranteed to be real-time and may be rate-limited. Verify important levels with your primary data source. Charts powered by <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.';
+ }catch(err){emaHistoryState.set(ticker,'failed');if(current()?.ticker===ticker){setChartStatus('Automatic data unavailable');$('chartMessage').innerHTML='Could not retrieve daily candles for <b>'+ticker.replace(/</g,'&lt;')+'</b> ('+String(err.message).replace(/</g,'&lt;')+'). You can click Reload daily data to retry, or open the full TradingView chart. <br><br><a href="'+chartURL(ticker)+'" target="_blank" rel="noopener noreferrer">Open full TradingView ↗</a>'}if($('emaFilter').value!=='all')render()}
 }
 function emaSnapshot(bars){
  if(!Array.isArray(bars)||!bars.length)return null;
@@ -857,15 +859,15 @@ function calculateRiskPlan(){
  put('riskPlannedProfit',quantity!==null&&validQty?'₹'+fmt(quantity*reward):'Set quantity');
  if(validation)validation.textContent=(budget!==null?(suggested>0?'Budget-based size risks approximately ₹'+fmt(suggested*risk)+'.':'Risk budget is too small for one share.'):'Add a risk budget to estimate quantity.')+' Planning aid only; this does not place orders.';
 }
-function matchesEMAFilter(stock,filter){
- if(filter==='all')return true;
- const snapshot=emaSnapshot(chartDataByTicker.get(stock.ticker));if(!snapshot)return false;
+function matchesEMAFilter(stock,filter,snapshot){
+ if(filter==='all')return {match:true,state:'match'};
+ if(!snapshot){return {match:false,state:emaHistoryState.get(stock.ticker)==='failed'?'failed':'awaiting'}}
  const e=snapshot.emas,c=snapshot.close;
- if(filter==='bullish')return [e[10],e[20],e[50],e[200]].every(Number.isFinite)&&c>e[10]&&e[10]>e[20]&&e[20]>e[50]&&e[50]>e[200];
- if(filter==='bearish')return [e[10],e[20],e[50],e[200]].every(Number.isFinite)&&c<e[10]&&e[10]<e[20]&&e[20]<e[50]&&e[50]<e[200];
- const match=filter.match(/^(above|below)(10|20|50|200)$/);if(!match)return true;
- const ema=e[Number(match[2])];if(!Number.isFinite(ema))return false;
- return match[1]==='above'?c>ema:c<ema;
+ let matched;
+ if(filter==='bullish')matched=[e[10],e[20],e[50],e[200]].every(Number.isFinite)?c>e[10]&&e[10]>e[20]&&e[20]>e[50]&&e[50]>e[200]:null;
+ else if(filter==='bearish')matched=[e[10],e[20],e[50],e[200]].every(Number.isFinite)?c<e[10]&&e[10]<e[20]&&e[20]<e[50]&&e[50]<e[200]:null;
+ else{const condition=filter.match(/^(above|below)(10|20|50|200)$/);if(!condition)return {match:true,state:'match'};const ema=e[Number(condition[2])];matched=Number.isFinite(ema)?(condition[1]==='above'?c>ema:c<ema):null}
+ return matched===null?{match:false,state:'insufficient'}:{match:matched,state:matched?'match':'nonmatch'};
 }
 async function scanEMAData(){
  if(!['127.0.0.1','localhost'].includes(location.hostname)||location.port!=='8765'||location.protocol!=='http:'){alert('Open the desk at http://127.0.0.1:8765 to load EMA data.');return}
@@ -874,13 +876,14 @@ async function scanEMAData(){
  const button=$('scanEMAData');button.disabled=true;let loaded=0,failed=0;
  try{
   for(let i=0;i<stocks.length;i++){
-   const stock=stocks[i];if(chartDataByTicker.has(stock.ticker)){loaded++;continue}
+   const stock=stocks[i];if(chartDataByTicker.has(stock.ticker)){emaHistoryState.set(stock.ticker,'loaded');loaded++;continue}
+   emaHistoryState.set(stock.ticker,'loading');
    $('filterStatus').textContent='Loading EMA history '+(i+1)+' / '+stocks.length+' · '+stock.ticker+' · '+loaded+' available, '+failed+' failed';
    try{
     const params=new URLSearchParams({symbol:yahooSymbol(stock.ticker),period:'2y'});
     const data=await requestLocalHistory(new URL('/api/history?'+params.toString(),location.href).toString());
-    if(Array.isArray(data?.bars)&&data.bars.length){chartDataByTicker.set(stock.ticker,data.bars);loaded++}else failed++;
-   }catch(err){failed++}
+    if(Array.isArray(data?.bars)&&data.bars.length){chartDataByTicker.set(stock.ticker,data.bars);emaHistoryState.set(stock.ticker,'loaded');loaded++}else{emaHistoryState.set(stock.ticker,'failed');failed++}
+   }catch(err){emaHistoryState.set(stock.ticker,'failed');failed++}
   }
  }finally{
   button.disabled=false;$('filterStatus').textContent='EMA scan finished: '+loaded+' stocks have history, '+failed+' failed or unavailable. EMA filters exclude stocks without loaded data.';
@@ -897,9 +900,14 @@ function displayDecision(value){
 function render(){
  renderWatchlist();
  const query=$('search').value.toLowerCase(),decisionFilter=$('decisionFilter').value,emaFilter=$('emaFilter').value;
- let filtered=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes(query));
- if(decisionFilter==='unreviewed')filtered=filtered.filter(x=>!decisions.has(x.ticker));else if(decisionFilter!=='all')filtered=filtered.filter(x=>decisions.get(x.ticker)===decisionFilter);
- if(emaFilter!=='all')filtered=filtered.filter(x=>matchesEMAFilter(x,emaFilter));
+ let candidates=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes(query));
+ if(decisionFilter==='unreviewed')candidates=candidates.filter(x=>!decisions.has(x.ticker));else if(decisionFilter!=='all')candidates=candidates.filter(x=>decisions.get(x.ticker)===decisionFilter);
+ let emaCounts={match:0,nonmatch:0,awaiting:0,failed:0,insufficient:0};
+ let filtered=emaFilter==='all'?candidates:candidates.filter(stock=>{const result=matchesEMAFilter(stock,emaFilter,emaSnapshot(chartDataByTicker.get(stock.ticker)));emaCounts[result.state]++;return result.match});
+ if(emaFilter!=='all'){
+  const incomplete=emaCounts.awaiting+emaCounts.failed+emaCounts.insufficient;
+  $('filterStatus').textContent=filtered.length+' matching '+(filtered.length===1?'stock':'stocks')+'; '+emaCounts.nonmatch+' evaluated and do not match. '+emaCounts.awaiting+' awaiting data, '+emaCounts.failed+' failed, '+emaCounts.insufficient+' with insufficient history.'+(incomplete?' Results may be incomplete.':' All candidate stocks were evaluated.');
+ }else $('filterStatus').textContent='EMA filters use history loaded in this session. Load EMA data to evaluate the full imported list.';
  if(sortAZ)filtered.sort((a,b)=>a.ticker.localeCompare(b.ticker));
  visibleStocks=filtered;
  if(!visibleStocks.length)active=-1;
