@@ -30,7 +30,7 @@ IMPORTANT
 - Do NOT double-click index.html directly. Launch it through start_swing_review.bat so the local data helper is active.
 - This provides daily historical data, not live market data.
 - The helper obtains prices from Yahoo Finance using the community yfinance Python package. Requests are serialized, spaced out, retried after transient provider failures, and successful histories are cached for 30 minutes. Yahoo can still change access, rate-limit requests, or return no data for particular symbols, so this is a workaround for browser CORS, not a guaranteed institutional data feed.
-- NSE symbols are mapped to .NS; BSE symbols to .BO. If a particular listing is not present on Yahoo Finance, use Import OHLCV CSV or open the TradingView chart.
+- NSE symbols are mapped to .NS; BSE symbols to .BO. If a particular listing is not present on Yahoo Finance, open the TradingView chart.
 - Use market data for research and cross-check important prices against your broker/data provider.
 - The chart display also needs an internet connection to load TradingView Lightweight Charts from unpkg.com.
 
@@ -40,4 +40,4 @@ TROUBLESHOOTING
 - “Yahoo Finance returned no daily history…”: the local helper is reachable, but Yahoo may be rate-limiting the request or may not list the ticker. Wait briefly and use Reload daily data.
 - “Could not download…”: check internet and try Reload daily data. Some symbols may not be available through Yahoo Finance.
 - “Address already in use”: close another copy of Swing Review Desk first, or restart the computer and try again.
-- If your network blocks Yahoo Finance or Python package downloads, this approach may still fail; use a licensed market-data API or import historical OHLCV CSVs.
+- If your network blocks Yahoo Finance or Python package downloads, this approach may still fail; use a licensed market-data API.
