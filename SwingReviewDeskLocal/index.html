@@ -48,31 +48,419 @@
   .chartbox{flex:none;height:66vh;min-height:440px}
   .chart-canvas{min-height:260px}
 }
+
+/* Phase 1 polish: accessible theme, clearer focus states, and compact mobile controls. */
+:root[data-theme="dark"]{color-scheme:dark;--bg:#000000;--panel:#0a0a0a;--panel2:#0a0a0a;--line:#262626;--text:#e5edf8;--muted:#a3a3a3;--accent:#818cf8;--accent-soft:#202020;--green:#4ade80;--red:#f87171;--amber:#fbbf24;--shadow:0 8px 28px rgba(0,0,0,.55)}
+:root[data-theme="dark"] body{background:linear-gradient(180deg,#000000 0%,#000000 100%)}
+:root[data-theme="dark"] header,:root[data-theme="dark"] .topline,:root[data-theme="dark"] .chart-toolbar,:root[data-theme="dark"] .drawing-toolbar,:root[data-theme="dark"] .chart-legend,:root[data-theme="dark"] .foot,:root[data-theme="dark"] .watchlist-section,:root[data-theme="dark"] .notice,:root[data-theme="dark"] .chart-message{background:var(--panel2);border-color:var(--line)}
+:root[data-theme="dark"] button,:root[data-theme="dark"] .field,:root[data-theme="dark"] .style-panel summary,:root[data-theme="dark"] .style-controls{background:#0a0a0a;color:var(--text);border-color:#303030}
+:root[data-theme="dark"] button:hover{background:#1c1c1c;border-color:#555555}
+:root[data-theme="dark"] .primary{background:#4f46e5;color:#fff;border-color:#6366f1}
+:root[data-theme="dark"] .good{background:#102516;color:#86efac;border-color:#285238}
+:root[data-theme="dark"] .bad{background:#2a1115;color:#fda4af;border-color:#633039}
+:root[data-theme="dark"] .warn{background:#29200d;color:#fcd34d;border-color:#5b4820}
+:root[data-theme="dark"] .stat{background:linear-gradient(180deg,#0d0d0d,#080808);border-color:var(--line)}
+:root[data-theme="dark"] .stock,:root[data-theme="dark"] .watch-item-row{border-color:#262626}
+:root[data-theme="dark"] .list{border-top-color:#262626}
+:root[data-theme="dark"] .stock:hover,:root[data-theme="dark"] .watch-item:hover{background:#191919}
+:root[data-theme="dark"] .stock.active{background:#202020}
+:root[data-theme="dark"] .stock .name,:root[data-theme="dark"] .watch-symbol,:root[data-theme="dark"] .section-title,:root[data-theme="dark"] .empty b{color:#e5edf8}
+:root[data-theme="dark"] .stock.active .name{color:#c7d2fe}
+:root[data-theme="dark"] .pill{background:#202020;color:#c7d2fe;border-color:#39476b}
+:root[data-theme="dark"] .chartbox,:root[data-theme="dark"] .chart-canvas{background:#000000}
+:root[data-theme="dark"] .chart-legend{color:#b6c3d6}
+:root[data-theme="dark"] .drawing-toolbar-hint{background-color:#0a0a0a!important;background-image:none!important;color:#a3a3a3!important;border-color:#262626!important;box-shadow:none!important}
+:root[data-theme="dark"] .drawing-toolbar-hint b{color:#e5edf8!important}
+:root[data-theme="dark"] .drawing-toolbar-hint .key{background:#000000!important;color:#d4d4d4!important;border-color:#303030!important}
+:root[data-theme="dark"] .drawing-toolbar-hint b{color:#e5edf8}
+:root[data-theme="dark"] .key{background:#0a0a0a;color:#c4d0e2;border-color:#303030}
+:root[data-theme="dark"] .watch-exchange{background:#202020;color:#c4d0e2}
+:root[data-theme="dark"] .watch-remove{background:transparent}
+:root[data-theme="dark"] .drawing-toolbar .draw-tool.active{background:#252525;border-color:#555555;color:#dbeafe}
+:root[data-theme="dark"] .style-panel[open] summary{background:#202020;color:#c7d2fe}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:520px){header .row{gap:6px}header .row button{min-width:0;padding:8px 9px;font-size:12px}.wrap{padding:9px}.pad{padding:12px}.chart-toolbar .row{width:100%}.chart-toolbar .row button{flex:1}.drawing-toolbar{gap:5px}.drawing-toolbar .draw-tool,.drawing-toolbar .draw-action{font-size:10px;padding:6px 7px}}
+
+/* Phase 2: stock summary and review filters */
+.review-filters{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.review-filters .field{min-width:0;padding:8px 9px;font-size:12px}
+.review-filters .filter-wide{grid-column:1/-1}
+.filter-status{font-size:10px;color:var(--muted);line-height:1.4;margin-top:6px}
+.ema-scan-button{width:100%;padding:8px 10px;font-size:12px}
+.summary-panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+.summary-metric{min-width:0;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.summary-metric small{display:block;font-size:10px;color:var(--muted);white-space:nowrap}
+.summary-metric strong{display:block;font-size:14px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.summary-metric .summary-sub{display:block;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-metric.summary-trend strong{font-size:12px}
+.summary-panel .positive{color:var(--green)}.summary-panel .negative{color:var(--red)}.summary-panel .neutral{color:var(--muted)}
+:root[data-theme="dark"] .summary-panel,:root[data-theme="dark"] .summary-metric{background:#0a0a0a;border-color:#262626}
+@media(max-width:1200px){.summary-panel{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;gap:6px}.summary-metric{padding:7px}.review-filters{grid-template-columns:1fr}.review-filters .filter-wide{grid-column:auto}}
+
+
+/* Phase 1 follow-up: reclaim screen space for the price chart and clarify filters. */
+.filter-field{min-width:0}
+.filter-label{display:block;font-size:10px;font-weight:700;color:var(--muted);margin:0 0 3px 1px}
+.review-filters{gap:5px;margin-top:5px}
+.review-filters .field{width:100%}
+.filter-status{font-size:9px;line-height:1.35;margin-top:4px}
+.ema-scan-button{padding:7px 9px}
+@media (min-width:901px){
+  header{min-height:54px;padding:5px clamp(12px,1.5vw,22px);gap:8px}
+  header .row{gap:6px}
+  header .row button{padding:6px 8px;font-size:11px}
+  h1{font-size:17px}
+  header small{font-size:10px}
+  .wrap{height:calc(100vh - 54px);max-height:calc(100vh - 54px);padding:7px 9px;gap:10px;grid-template-columns:260px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+  .wrap>aside>.pad{padding:8px;gap:6px}
+  .section-title{font-size:12px}
+  .field{padding:7px 9px;font-size:12px}
+  .review-filters .field{padding:5px 6px;font-size:10px}
+  .filter-label{font-size:9px;margin-bottom:2px}
+  .filter-status{font-size:9px;line-height:1.25;margin-top:3px}
+  .ema-scan-button{padding:5px 7px;font-size:10px}
+  .stats{margin:5px 0 0;gap:5px}
+  .stat{padding:5px}
+  .stat small{font-size:9px}
+  .stat b{font-size:15px}
+  .watchlist-section{padding:7px 8px}
+  .watchlist-add{gap:5px;margin:5px 0}
+  .watchlist-add .field{padding:6px 7px;font-size:11px}
+  .watchlist-add button{padding:5px 7px;font-size:10px}
+  .watchlist-list{max-height:88px}
+  .watch-item-row{padding:2px 4px;gap:4px}
+  .watch-item{padding:3px 4px;font-size:11px;gap:5px}
+  .watch-exchange{font-size:9px;padding:1px 4px}
+  .watch-remove{padding:2px 4px;font-size:11px}
+  .list{flex:1;min-height:50px;max-height:none}
+  .stock{padding:5px 8px;gap:6px}
+  .stock .name{font-size:12px}
+  .stock .sub{font-size:9px;margin-top:1px;max-width:170px}
+  .decision{font-size:9px}
+  .wrap>aside>.notice{padding:5px 7px;font-size:9px;line-height:1.3}
+  .topline{padding:5px 9px;gap:5px}
+  .ticker{font-size:20px}
+  .topline .muted{font-size:10px;margin-top:2px}
+  .topline .row{gap:4px}
+  .topline button{padding:4px 6px;font-size:10px}
+  .summary-panel{padding:4px 7px;gap:4px}
+  .summary-metric{padding:4px 6px}
+  .summary-metric small{font-size:9px;line-height:1.2}
+  .summary-metric strong{font-size:12px;line-height:1.2}
+  .summary-metric .summary-sub{font-size:9px;line-height:1.2}
+  .summary-metric.summary-trend strong{font-size:10px}
+  .chartbox{flex:1 1 auto;min-height:0}
+  .chart-toolbar{padding:3px 7px;gap:4px}
+  .chart-toolbar button{padding:3px 6px;font-size:10px}
+  .chart-status{font-size:10px}
+  .drawing-toolbar{padding:3px 6px;gap:3px}
+  .drawing-toolbar .draw-tool,.drawing-toolbar .draw-action{padding:3px 5px;font-size:9px}
+  .drawing-toolbar .tool-divider{height:17px;margin:0 1px}
+  .drawing-toolbar-hint{padding:1px 7px 2px;font-size:9px;line-height:1.15;max-height:14px}
+  .chart-legend{padding:3px 7px;gap:7px;font-size:10px}
+  .chart-canvas{min-height:180px}
+  .chart-message{padding:3px 7px;font-size:9px;line-height:1.2;max-height:23px}
+  .foot{padding:5px 8px;gap:6px}
+  .foot button{padding:5px 7px;font-size:11px}
+  .main>.notice{padding:4px 8px;font-size:9px;line-height:1.25}
+}
+@media (max-width:900px){
+  .stock{padding:8px 10px}
+  .stock .sub{font-size:10px}
+}
+
+
+/* Sidebar simplification: compact sorting, clear action and stock counters. */
+.sidebar-list-actions{gap:5px;margin-top:1px}
+.sidebar-list-actions button{padding:4px 7px;font-size:10px;line-height:1.2;border-radius:7px;box-shadow:none}
+@media (min-width:901px){
+  .sidebar-list-actions button{padding:3px 6px;font-size:9px}
+  .stats{gap:3px;margin:3px 0 0}
+  .stat{padding:3px 4px;border-radius:7px}
+  .stat small{font-size:8px;line-height:1.2}
+  .stat b{font-size:12px;line-height:1.25;letter-spacing:0}
+}
+
+
+/* Local research notes: collapsed by default so the price chart stays large. */
+.research-notes{flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
+.research-notes>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 9px;font-size:10px;font-weight:750;cursor:pointer;color:var(--text)}
+.research-notes>summary::-webkit-details-marker{display:none}
+.research-notes>summary:after{content:'＋';margin-left:auto;color:var(--muted);font-size:11px}
+.research-notes[open]>summary:after{content:'−'}
+.notes-summary-meta{font-size:9px;font-weight:500;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.research-notes-body{padding:4px 8px 7px;border-top:1px solid var(--line);max-height:32vh;overflow:auto}
+.notes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.notes-grid label{display:block;min-width:0;font-size:9px;font-weight:700;color:var(--muted)}
+.notes-grid .field{display:block;width:100%;margin-top:3px;padding:5px 7px;font-size:11px;resize:vertical}
+.notes-grid textarea.field{min-height:42px;line-height:1.35}
+.notes-wide{grid-column:1/-1}
+.notes-save-status{margin-top:5px;font-size:9px;line-height:1.3;color:var(--muted)}
+:root[data-theme="dark"] .research-notes{background:#050505;border-color:#262626}
+:root[data-theme="dark"] .research-notes-body{border-color:#262626}
+@media(max-width:520px){.notes-grid{grid-template-columns:1fr}.notes-wide{grid-column:auto}.notes-summary-meta{max-width:60%}}
+@media(min-width:901px){
+ .research-notes>summary{padding:3px 7px;font-size:9px}
+ .notes-summary-meta{font-size:8px}
+ .research-notes-body{padding:4px 7px 6px}
+ .notes-grid{gap:5px}
+ .notes-grid label{font-size:9px}
+ .notes-grid .field{padding:4px 6px;font-size:10px}
+ .notes-grid textarea.field{min-height:34px}
+ .notes-save-status{font-size:8px}
+}
+
+/* Local JSON backup / restore controls */
+.backup-actions{display:flex;gap:5px;margin-top:3px}
+.backup-actions button{flex:1;min-width:0;padding:5px 7px;font-size:10px;border-radius:7px;box-shadow:none}
+.backup-status{font-size:9px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
+@media(min-width:901px){.backup-actions{gap:4px;margin-top:1px}.backup-actions button{padding:3px 6px;font-size:9px}.backup-status{font-size:8px;line-height:1.2}}
+
+
+/* Premium visual pass: calm contrast, consistent surfaces, sharper hierarchy. */
+:root{
+  --accent:#5148e5;
+  --accent-soft:#eef2ff;
+  --line:#e2e8f0;
+  --shadow:0 10px 28px rgba(15,23,42,.055);
+}
+body{letter-spacing:.005em}
+header{
+  border-bottom:1px solid var(--line);
+  box-shadow:0 5px 18px rgba(15,23,42,.035);
+  position:relative;
+  z-index:25;
+}
+header h1{letter-spacing:-.65px;font-weight:820}
+header small{letter-spacing:.025em;color:var(--muted)}
+.panel{border-radius:13px;box-shadow:var(--shadow);border-color:var(--line)}
+.section-title{letter-spacing:.015em}
+button{
+  border-radius:8px;
+  font-weight:650;
+  transition:background .14s ease,border-color .14s ease,color .14s ease;
+}
+button:active{transform:none}
+.primary{box-shadow:0 3px 9px rgba(79,70,229,.13)}
+.field{border-radius:8px;transition:border-color .14s ease,box-shadow .14s ease}
+.stats{gap:5px}
+.stat{border-radius:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)}
+.stock{border-left:2px solid transparent;transition:background .12s ease,border-color .12s ease}
+.stock.active{border-left-color:var(--accent);box-shadow:none;padding-left:11px}
+.stock .name{letter-spacing:.015em}
+.decision{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:99px;
+  padding:2px 6px;
+  line-height:1.25;
+  letter-spacing:.025em;
+  background:transparent;
+}
+.decision.keep{background:rgba(21,128,61,.09)}
+.decision.skip{background:rgba(220,38,38,.08)}
+.decision.later{background:rgba(180,83,9,.09)}
+.pill{letter-spacing:.035em}
+.topline{border-bottom-color:var(--line)}
+.ticker{font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+.summary-panel{gap:5px}
+.summary-metric{border-radius:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.summary-metric strong{font-variant-numeric:tabular-nums;letter-spacing:-.15px}
+.chart-toolbar,.drawing-toolbar{border-color:var(--line)}
+.chart-toolbar button,.drawing-toolbar button{border-radius:7px}
+.drawing-toolbar .draw-tool.active{box-shadow:inset 0 0 0 1px rgba(79,70,229,.12)}
+.chart-legend{gap:6px}
+.chart-legend span{padding:2px 4px;border-radius:5px}
+.research-notes>summary{transition:background .12s ease}
+.research-notes>summary:hover{background:var(--accent-soft)}
+.backup-actions button{font-weight:650}
+.watch-item{border-radius:6px}
+.watch-remove{border-radius:6px}
+:root[data-theme="dark"]{
+  --accent:#8b83ff;
+  --accent-soft:#141421;
+  --line:#262626;
+  --shadow:0 12px 28px rgba(0,0,0,.28);
+}
+:root[data-theme="dark"] header{
+  background:#050505;
+  border-bottom-color:#242424;
+  box-shadow:0 6px 24px rgba(0,0,0,.24);
+}
+:root[data-theme="dark"] .panel{background:#050505;border-color:#242424;box-shadow:0 10px 30px rgba(0,0,0,.24)}
+:root[data-theme="dark"] .stat{
+  background:#090909;
+  border-color:#292929;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+:root[data-theme="dark"] .stock.active{
+  background:#12121b;
+  border-left-color:#8b83ff;
+}
+:root[data-theme="dark"] .stock.active .name{color:#c8c4ff}
+:root[data-theme="dark"] .decision.keep{background:rgba(74,222,128,.10);color:#7ee7a2}
+:root[data-theme="dark"] .decision.skip{background:rgba(248,113,113,.10);color:#ff9999}
+:root[data-theme="dark"] .decision.later{background:rgba(251,191,36,.10);color:#fcd46c}
+:root[data-theme="dark"] .pill{background:#15151b;border-color:#30303b;color:#c8c4ff}
+:root[data-theme="dark"] .summary-metric{background:#080808;border-color:#282828;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+:root[data-theme="dark"] .review-filters .field,
+:root[data-theme="dark"] .field{
+  background:#080808;
+  border-color:#2d2d2d;
+}
+:root[data-theme="dark"] .field:focus{
+  border-color:#7770df;
+  box-shadow:0 0 0 2px rgba(139,131,255,.13);
+}
+:root[data-theme="dark"] button{box-shadow:none}
+:root[data-theme="dark"] button:hover{border-color:#55516f}
+:root[data-theme="dark"] .primary{
+  background:#6259ed;
+  border-color:#756df6;
+  color:#fff;
+}
+:root[data-theme="dark"] .primary:hover{background:#756df6}
+:root[data-theme="dark"] .research-notes>summary:hover{background:#11111a}
+:root[data-theme="dark"] .chart-legend span{background:rgba(255,255,255,.025)}
+@media(max-width:900px){
+  .panel{border-radius:11px}
+  header{box-shadow:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+}
+
+
+/* Compact per-ticker long risk planner */
+.risk-planner{flex:0 0 auto;min-width:0;border-bottom:1px solid var(--line);background:var(--panel)}
+.risk-planner>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 9px;font-size:10px;font-weight:750;cursor:pointer;color:var(--text)}
+.risk-planner>summary::-webkit-details-marker{display:none}
+.risk-planner>summary:after{content:'＋';margin-left:auto;color:var(--muted);font-size:11px}
+.risk-planner[open]>summary:after{content:'−'}
+.risk-planner>summary:hover{background:var(--accent-soft)}
+.risk-planner-body{padding:5px 8px 7px;border-top:1px solid var(--line);max-height:32vh;overflow:auto}
+.risk-input-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.risk-input-grid label{display:block;min-width:0;font-size:9px;font-weight:700;color:var(--muted)}
+.risk-input-grid .field{display:block;width:100%;margin-top:3px;padding:5px 6px;font-size:11px;font-variant-numeric:tabular-nums}
+.risk-results{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:7px}
+.risk-result{min-width:0;border:1px solid var(--line);border-radius:7px;padding:5px 6px;background:var(--panel2)}
+.risk-result span{display:block;font-size:8px;line-height:1.25;color:var(--muted)}
+.risk-result strong{display:block;font-size:11px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.risk-validation{font-size:9px;line-height:1.35;color:var(--muted);margin-top:5px}
+.risk-validation.error{color:var(--red)}
+:root[data-theme="dark"] .risk-planner{background:#050505;border-color:#262626}
+:root[data-theme="dark"] .risk-planner-body{border-color:#262626}
+:root[data-theme="dark"] .risk-result{background:#080808;border-color:#282828}
+:root[data-theme="dark"] .risk-planner>summary:hover{background:#11111a}
+@media(min-width:901px){
+ .risk-planner>summary{padding:3px 7px;font-size:9px}
+ .risk-planner-body{padding:4px 7px 5px}
+ .risk-input-grid{gap:4px}
+ .risk-input-grid label{font-size:8px}
+ .risk-input-grid .field{padding:3px 5px;font-size:10px}
+ .risk-results{gap:4px;margin-top:5px}
+ .risk-result{padding:3px 5px}
+ .risk-result span{font-size:8px}
+ .risk-result strong{font-size:10px}
+ .risk-validation{font-size:8px;margin-top:4px}
+}
+@media(max-width:520px){
+ .risk-input-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .risk-input-grid label:last-child{grid-column:1/-1}
+ .risk-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.selection-export-status{font-size:9px;line-height:1.2;max-width:150px;color:var(--muted);white-space:normal}
+@media(max-width:900px){.selection-export-status{width:100%;max-width:none}}
+
+
 </style></head>
 <body>
-<header><div><h1>⚡ Swing Review Desk</h1><small>Scanner review · Daily price action · Trend filters</small></div><div class="row"><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="exportKeep">Export kept</button><button id="exportAll">Export all decisions</button></div></header>
+<header><div><h1>⚡ Swing Review Desk</h1><small>Review charts · Track setups · Shortlist stocks</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="copySelected" title="Copy selected stock symbols so you can add them to Kite">Copy for Kite</button><button id="exportKeep" title="Download the selected stocks as a reference CSV">Export selected</button><small class="selection-export-status" id="selectionExportStatus" aria-live="polite"></small></div></header>
 <div class="wrap">
 <aside class="panel">
 <div class="pad stack">
 <div class="row between"><b class="section-title">Scanner review list</b><span class="pill" id="fileCount">0 files</span></div>
 
 <input class="field" id="search" placeholder="Search ticker or scanner…">
-<div class="row"><label class="muted" for="market">Market</label><select class="field" id="market" style="flex:1"><option value="NSE">NSE (India)</option><option value="BSE">BSE (India)</option><option value="NASDAQ">NASDAQ (US)</option><option value="NYSE">NYSE (US)</option></select></div>
-<div class="row"><button id="sortName">Sort A–Z</button><button id="clearDecisions">Clear decisions</button></div>
-<div class="stats"><div class="stat"><small>Stocks</small><b id="countStocks">0</b></div><div class="stat"><small>Kept</small><b id="countKeep" style="color:var(--green)">0</b></div><div class="stat"><small>Skipped</small><b id="countSkip" style="color:var(--red)">0</b></div></div>
-</div>
-<div class="watchlist-section"><div class="row between"><b class="section-title">My Watchlist</b><span class="pill" id="watchCount">0 saved</span></div><div class="watchlist-add"><input class="field" id="watchTickerInput" placeholder="Ticker, e.g. RELIANCE" aria-label="Ticker to add to My Watchlist"><button id="addWatchTicker" class="primary">＋ Add</button></div><div class="watchlist-list" id="myWatchlist"><div class="pad muted">Save a stock using ☆ Add to Watchlist.</div></div></div><div class="list" id="stockList"><div class="pad muted">Import CSV files to begin.</div></div>
-<div class="notice">Keyboard: <span class="key">↑</span>/<span class="key">↓</span> navigate · <span class="key">K</span> keep · <span class="key">S</span> skip · <span class="key">L</span> later · <span class="key">Alt+R</span> reset chart</div>
+<div class="review-filters" aria-label="Stock review filters">
+<div class="filter-field"><label class="filter-label" for="decisionFilter">Selection</label><select class="field" id="decisionFilter" aria-label="Filter by review decision"><option value="all">All stocks</option><option value="Keep">Selected for Kite</option><option value="Skip">Skipped</option><option value="Later">Later</option><option value="unreviewed">Not reviewed</option></select></div>
+<div class="filter-field"><label class="filter-label" for="emaFilter">Price vs EMA</label><select class="field" id="emaFilter" aria-label="Filter by price and EMA"><option value="all">All EMA conditions</option><option value="above10">Close above EMA 10</option><option value="below10">Close below EMA 10</option><option value="above20">Close above EMA 20</option><option value="below20">Close below EMA 20</option><option value="above50">Close above EMA 50</option><option value="below50">Close below EMA 50</option><option value="above200">Close above EMA 200</option><option value="below200">Close below EMA 200</option><option value="bullish">Bullish EMA alignment</option><option value="bearish">Bearish EMA alignment</option></select></div>
+<button class="ema-scan-button filter-wide" id="scanEMAData" title="Load historical daily prices for imported tickers so the EMA filters can evaluate them">↻ Load EMA data for imported stocks</button>
+</div><div class="filter-status" id="filterStatus">EMA filters use data loaded in this session. Load EMA data to scan the full imported list.</div>
+<div class="row sidebar-list-actions"><button id="sortName" title="Sort imported stocks alphabetically">Sort A–Z</button><button id="resetKeep" title="Reset only stocks marked Select for Kite back to undecided">Reset Keep</button><button id="clearDecisions" title="Clear all current review decisions">Clear decisions</button></div>
+<div class="stats"><div class="stat"><small>Stocks</small><b id="countStocks">0</b></div><div class="stat"><small>Selected</small><b id="countKeep" style="color:var(--green)">0</b></div><div class="stat"><small>Skipped</small><b id="countSkip" style="color:var(--red)">0</b></div></div></div>
+<div class="list" id="stockList"><div class="pad muted">Import scanner CSVs to begin.</div></div>
+<div class="notice">Keyboard: <span class="key">↑</span>/<span class="key">↓</span> navigate · <span class="key">K</span> select for Kite · <span class="key">S</span> skip · <span class="key">L</span> later · <span class="key">Alt+R</span> reset chart</div>
 </aside>
 <main class="panel main">
-<div class="topline"><div><div class="ticker" id="activeTicker">No stock selected</div><div class="muted" id="activeMeta">Import one or more Chartink CSV files.</div></div><div class="row"><button id="prevBtn" disabled>↑ Previous</button><button id="nextBtn" disabled>↓ Next</button><button id="watchToggle" disabled>☆ Add to Watchlist</button><button id="openTV" disabled>Open TradingView ↗</button></div></div>
+<div class="topline"><div><div class="ticker" id="activeTicker">No stock selected</div><div class="muted" id="activeMeta">Import one or more Chartink CSV files.</div></div><div class="row"><button id="prevBtn" disabled>↑ Previous</button><button id="nextBtn" disabled>↓ Next</button><button id="openTV" disabled>Open TradingView ↗</button></div></div>
+<div class="summary-panel" id="summaryPanel" aria-label="Selected stock summary">
+<div class="summary-metric"><small>Latest close</small><strong id="summaryClose">—</strong><span class="summary-sub" id="summaryDate">No data loaded</span></div>
+<div class="summary-metric"><small>EMA 10</small><strong id="summaryEma10">—</strong><span class="summary-sub" id="summaryDist10">—</span></div>
+<div class="summary-metric"><small>EMA 20</small><strong id="summaryEma20">—</strong><span class="summary-sub" id="summaryDist20">—</span></div>
+<div class="summary-metric"><small>EMA 50</small><strong id="summaryEma50">—</strong><span class="summary-sub" id="summaryDist50">—</span></div>
+<div class="summary-metric"><small>EMA 200</small><strong id="summaryEma200">—</strong><span class="summary-sub" id="summaryDist200">—</span></div>
+<div class="summary-metric summary-trend"><small>Trend / decision</small><strong id="summaryTrend">Awaiting data</strong><span class="summary-sub" id="summaryDecision">Not selected</span></div>
+</div>
 <div class="chartbox" id="chartbox"><div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div></div>
-<div class="foot"><div class="row"><button id="keepBtn" class="good" disabled>✓ Keep <span class="key">K</span></button><button id="skipBtn" class="bad" disabled>✕ Skip <span class="key">S</span></button><button id="laterBtn" class="warn" disabled>◷ Later <span class="key">L</span></button></div><div class="row"><span class="muted" id="position">0 / 0</span><button id="nextUndecided" disabled>Next undecided ↓</button></div></div>
-<div class="notice">Daily historical candles with EMA 10/20/50/200 and volume. Launch this page using start_swing_review.bat so the local data helper can retrieve history. Not live data.</div>
+<div class="foot"><div class="row"><button id="keepBtn" class="good" disabled>✓ Select for Kite <span class="key">K</span></button><button id="skipBtn" class="bad" disabled>✕ Skip <span class="key">S</span></button><button id="laterBtn" class="warn" disabled>◷ Later <span class="key">L</span></button></div><div class="row"><span class="muted" id="position">0 / 0</span><button id="nextUndecided" disabled>Next undecided ↓</button></div></div>
+<div class="notice">Review daily candles with EMA 10/20/50/200 and volume. Mark candidates with “Select for Kite”, then copy or export the symbol list. Add each symbol manually in Kite; watchlist management is not exposed by the official Kite Connect API. Historical data is not live.</div>
 </main>
 </div>
 <script>
-const $=id=>document.getElementById(id);let stocks=[],active=0,filesLoaded=0,sortAZ=false;const decisions=new Map();
+const $=id=>document.getElementById(id);let stocks=[],visibleStocks=[],active=0,filesLoaded=0,sortAZ=false;
+function readReviewState(){
+ const empty={version:1,decisions:{},notes:{},riskPlans:{}};
+ try{
+  const parsed=JSON.parse(localStorage.getItem('swingReviewStateV1')||'{}');
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return empty;
+  const decisions={};
+  if(parsed.decisions&&typeof parsed.decisions==='object'&&!Array.isArray(parsed.decisions)){
+   for(const [ticker,value] of Object.entries(parsed.decisions)){if(['Keep','Skip','Later'].includes(value))decisions[ticker]=value}
+  }
+  const notes={};
+  if(parsed.notes&&typeof parsed.notes==='object'&&!Array.isArray(parsed.notes)){
+   for(const [ticker,note] of Object.entries(parsed.notes)){
+    if(!note||typeof note!=='object'||Array.isArray(note))continue;
+    notes[ticker]={
+     setupType:String(note.setupType||'').slice(0,80),
+     trendContext:String(note.trendContext||'').slice(0,2000),
+     entryRationale:String(note.entryRationale||'').slice(0,2000),
+     invalidation:String(note.invalidation||'').slice(0,200),
+     reviewDate:String(note.reviewDate||'').slice(0,20),
+     status:String(note.status||'Draft').slice(0,40),
+     updatedAt:String(note.updatedAt||'').slice(0,40)
+    };
+   }
+  }
+  const riskPlans={};
+  if(parsed.riskPlans&&typeof parsed.riskPlans==='object'&&!Array.isArray(parsed.riskPlans)){
+   for(const [ticker,plan] of Object.entries(parsed.riskPlans)){
+    if(!/^[A-Z0-9^._&+=-]+:[A-Z0-9^._&+=-]+$/i.test(ticker)||!plan||typeof plan!=='object'||Array.isArray(plan))continue;
+    const clean={};
+    for(const key of ['entry','stop','target','quantity','riskBudget']){
+     const value=plan[key];
+     if(value===undefined||value===null||value===''){clean[key]='';continue}
+     const num=Number(value);
+     if(Number.isFinite(num)&&num>=0&&(key!=='quantity'||Number.isInteger(num)))clean[key]=String(value).slice(0,32);
+     else clean[key]='';
+    }
+    riskPlans[ticker.toUpperCase()]=clean;
+   }
+  }
+  return {version:1,decisions,notes,riskPlans};
+ }catch(e){return empty}
+}
+const reviewState=readReviewState();
+const decisions=new Map(Object.entries(reviewState.decisions));
+function saveReviewState(){
+ reviewState.version=1;reviewState.decisions=Object.fromEntries(decisions);
+ try{localStorage.setItem('swingReviewStateV1',JSON.stringify(reviewState));return true}
+ catch(e){const status=$('notesSaveStatus');if(status)status.textContent='Could not save: browser storage may be unavailable or full.';return false}
+}
 function readWatchlist(){try{const value=JSON.parse(localStorage.getItem('swingReviewMyWatchlist')||'[]');return Array.isArray(value)?[...new Set(value.map(x=>String(x||'').trim().toUpperCase()).filter(x=>/^[A-Z0-9._&-]+:[A-Z0-9._&-]+$/.test(x)))]:[]}catch(e){return[]}}
 let myWatchlist=readWatchlist();
 function saveWatchlist(){try{localStorage.setItem('swingReviewMyWatchlist',JSON.stringify(myWatchlist))}catch(e){}}
@@ -82,15 +470,16 @@ function addWatchlistTicker(){const raw=$('watchTickerInput').value.trim();if(!r
 function syncWatchToggle(){const s=current();const button=$('watchToggle');if(!button)return;button.disabled=!s;if(s){const saved=myWatchlist.includes(s.ticker);button.textContent=saved?'★ In My Watchlist':'☆ Add to Watchlist';button.title=saved?'Remove current stock from My Watchlist':'Save current stock to My Watchlist'}}
 function toggleCurrentWatchlist(){const s=current();if(!s)return;if(myWatchlist.includes(s.ticker))myWatchlist=myWatchlist.filter(x=>x!==s.ticker);else myWatchlist.unshift(s.ticker);saveWatchlist();renderWatchlist();syncWatchToggle()}
 function parseCSV(text){let rows=[],row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++}else quoted=!quoted}else if(c===','&&!quoted){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row);row=[];cell=''}else cell+=c}if(cell.length||row.length){row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row)}return rows}
-function normTicker(raw){let s=String(raw||'').trim().replace(/^['"]|['"]$/g,'').toUpperCase();if(!s)return '';s=s.replace(/\s+/g,'');if(s.includes(':'))return s;return $('market').value+':'+s}
+function normTicker(raw){let s=String(raw||'').trim().replace(/^['"]|['"]$/g,'').toUpperCase();if(!s)return '';s=s.replace(/\s+/g,'');if(s.includes(':'))return s;return 'NSE:'+s}
 function findTickerCol(headers){const opts=['symbol','ticker','tradingsymbol','trading symbol','stock','stock name','name','company','company name','nse code','bse code','code'];let h=headers.map(x=>x.trim().toLowerCase());for(const o of opts){let i=h.indexOf(o);if(i>=0)return i}return -1}
 function addCSV(filename,text){const rows=parseCSV(text);if(!rows.length)return;let headers=rows[0].map(x=>x.trim()),col=findTickerCol(headers),start=1;if(col<0){col=0;start=0}const scanner=filename.replace(/\.csv$/i,'');for(let r=start;r<rows.length;r++){let raw=(rows[r][col]||'').trim();if(!raw)continue;let ticker=normTicker(raw);if(!ticker||ticker.includes(' ')||/^(SYMBOL|TICKER|STOCK NAME|NAME)$/.test(ticker))continue;let key=ticker.toUpperCase();let existing=stocks.find(s=>s.ticker===key);if(existing){if(!existing.scanners.includes(scanner))existing.scanners.push(scanner)}else stocks.push({ticker:key,plain:key.split(':').pop(),scanners:[scanner],source:filename})}}
-function current(){return stocks[active]||null}
+function current(){const stock=stocks[active]||null;return stock&&visibleStocks.includes(stock)?stock:null}
 function chartURL(ticker){return 'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(ticker)}
 const defaultChartPrefs={grid:false,ema10:'#0d9488',ema20:'#f59e0b',ema50:'#2563eb',ema200:'#9333ea',bull:'#16a34a',bear:'#ef4444'};
 function readChartPrefs(){try{return {...defaultChartPrefs,...JSON.parse(localStorage.getItem('swingReviewChartPrefs')||'{}')}}catch(e){return {...defaultChartPrefs}}}
 let chartPrefs=readChartPrefs();
-let chart=null,candleSeries=null,volumeSeries=null,emaSeries={},chartResizeObserver=null,chartDataByTicker=new Map(),chartLoadingTicker='',chartStatusText='',chartDisplayedBars=[];
+let darkMode=(()=>{try{return localStorage.getItem('swingReviewTheme')==='dark'}catch(e){return false}})();
+let chart=null,candleSeries=null,volumeSeries=null,emaSeries={},chartResizeObserver=null,chartDataByTicker=new Map(),emaHistoryState=new Map(),chartLoadingTicker='',chartStatusText='',chartDisplayedBars=[];
 let currentDrawingTicker='',drawingTool='cursor',pendingAnchor=null,mousePoint=null,drawingOverlay=null;
 function readDrawingStore(){try{const data=JSON.parse(localStorage.getItem('swingReviewDrawings')||'{}');return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch(e){return {}}}
 let drawingsByTicker=readDrawingStore();
@@ -98,6 +487,8 @@ function saveDrawingStore(){try{localStorage.setItem('swingReviewDrawings',JSON.
 function currentDrawings(){if(!currentDrawingTicker)return[];if(!Array.isArray(drawingsByTicker[currentDrawingTicker]))drawingsByTicker[currentDrawingTicker]=[];return drawingsByTicker[currentDrawingTicker]}
 function saveNewDrawing(drawing){if(!currentDrawingTicker)return;currentDrawings().push(drawing);saveDrawingStore();drawDrawingOverlay();setChartStatus('Drawing saved for '+currentDrawingTicker+' · use Undo to remove the last drawing')}
 function saveChartPrefs(){try{localStorage.setItem('swingReviewChartPrefs',JSON.stringify(chartPrefs))}catch(e){}}
+function applyTheme(){document.documentElement.dataset.theme=darkMode?'dark':'light';const button=$('themeToggle');if(button){button.textContent=darkMode?'☀ Light mode':'🌙 Dark mode';button.setAttribute('aria-pressed',String(darkMode));button.title=darkMode?'Switch to light appearance':'Switch to dark appearance'}try{localStorage.setItem('swingReviewTheme',darkMode?'dark':'light')}catch(e){}if(chart){const c=darkMode?{background:'#000000',text:'#d4d4d4',grid:'#1f1f1f',border:'#303030',crosshair:'#737373'}:{background:'#ffffff',text:'#64748b',grid:'#e8edf5',border:'#e2e8f0',crosshair:'#94a3b8'};chart.applyOptions({layout:{background:{type:LightweightCharts.ColorType.Solid,color:c.background},textColor:c.text},grid:{vertLines:{visible:!!chartPrefs.grid,color:c.grid},horzLines:{visible:!!chartPrefs.grid,color:c.grid}},rightPriceScale:{borderColor:c.border,textColor:c.text},timeScale:{borderColor:c.border},crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:c.crosshair,width:1,style:LightweightCharts.LineStyle.Dashed},horzLine:{color:c.crosshair,width:1,style:LightweightCharts.LineStyle.Dashed}}});drawDrawingOverlay()}}
+function toggleTheme(){darkMode=!darkMode;applyTheme()}
 function rgba(hex,alpha){const h=String(hex||'#000000').replace('#','');const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${alpha})`}
 function updateChartStyle(key,value){chartPrefs[key]=value;saveChartPrefs();if(key==='grid'&&chart){chart.applyOptions({grid:{vertLines:{visible:!!value},horzLines:{visible:!!value}}})}else if(key==='ema10'||key==='ema20'||key==='ema50'||key==='ema200'){const period=Number(key.slice(3));if(emaSeries[period])emaSeries[period].applyOptions({color:value});const legend=document.querySelector('.chart-legend .'+key);if(legend)legend.style.color=value}else if(key==='bull'||key==='bear'){if(candleSeries)candleSeries.applyOptions({upColor:chartPrefs.bull,downColor:chartPrefs.bear,wickUpColor:chartPrefs.bull,wickDownColor:chartPrefs.bear,borderUpColor:chartPrefs.bull,borderDownColor:chartPrefs.bear});if(volumeSeries)volumeSeries.setData(chartDisplayedBars.map(b=>({time:b.time,value:b.volume||0,color:rgba(b.close>=b.open?chartPrefs.bull:chartPrefs.bear,.34)})))}}
 function yahooSymbol(ticker){let parts=ticker.split(':');let market=(parts[0]||'NSE').toUpperCase(),sym=(parts[1]||parts[0]||'').trim();if(market==='NSE')return sym+'.NS';if(market==='BSE')return sym+'.BO';return sym}
@@ -105,7 +496,7 @@ function makeChartShell(host,ticker){
  if(chart){try{chart.remove()}catch(e){}chart=null}if(chartResizeObserver){chartResizeObserver.disconnect();chartResizeObserver=null}candleSeries=null;volumeSeries=null;emaSeries={};chartDisplayedBars=[];
  host.innerHTML='';
  const toolbar=document.createElement('div');toolbar.className='chart-toolbar';
- toolbar.innerHTML=`<div class="row"><button id="reloadDaily">↻ Reload data</button><button id="resetChartView" class="reset-view" title="Reset chart view (Alt+R)">⤢ Reset view <span class="key">Alt+R</span></button><label class="filebtn"><input id="ohlcvFile" type="file" accept=".csv,text/csv" hidden><button id="importOHLCV">↑ Import OHLCV CSV</button></label></div>
+ toolbar.innerHTML=`<div class="row"><button id="reloadDaily">↻ Reload data</button><button id="resetChartView" class="reset-view" title="Reset chart view (Alt+R)">⤢ Reset view <span class="key">Alt+R</span></button></div>
  <details class="style-panel" id="stylePanel"><summary>⚙ Chart appearance</summary><div class="style-controls">
  <div class="control-title">Chart grid</div><label class="grid-control"><input id="gridToggle" type="checkbox" ${chartPrefs.grid?'checked':''}> Show horizontal and vertical grid lines</label>
  <div class="control-title">EMA line colors</div>
@@ -119,7 +510,7 @@ function makeChartShell(host,ticker){
  </div></details><span class="chart-status" id="chartStatus">Loading daily history…</span>`;
  const legend=document.createElement('div');legend.className='chart-legend';legend.innerHTML=`<span>● Candles</span><span class="ema10" style="color:${chartPrefs.ema10}">━ EMA 10</span><span class="ema20" style="color:${chartPrefs.ema20}">━ EMA 20</span><span class="ema50" style="color:${chartPrefs.ema50}">━ EMA 50</span><span class="ema200" style="color:${chartPrefs.ema200}">━ EMA 200</span><span>▥ Volume</span>`;
  const canvas=document.createElement('div');canvas.className='chart-canvas';canvas.id='dailyChart';
- const msg=document.createElement('div');msg.className='chart-message';msg.id='chartMessage';msg.textContent='Daily end-of-day data only. Launch via start_swing_review.bat for automatic history; otherwise import Date, Open, High, Low and Volume CSV.';
+ const msg=document.createElement('div');msg.className='chart-message';msg.id='chartMessage';msg.textContent='Daily end-of-day data via the local Python helper. Launch through start_swing_review.bat.';
  host.append(toolbar);
  const drawingToolbar=document.createElement('div');drawingToolbar.className='drawing-toolbar';drawingToolbar.id='drawingToolbar';
  drawingToolbar.innerHTML=`<button type="button" class="draw-tool active" data-tool="cursor" title="Pan and zoom chart">↖ Cursor</button><button type="button" class="draw-tool" data-tool="horizontal" title="Click once to place a horizontal price line">— Horizontal</button><button type="button" class="draw-tool" data-tool="trendline" title="Click two points to draw a trendline">／ Trendline</button><button type="button" class="draw-tool" data-tool="ray" title="Click two points to draw a ray">↗ Ray</button><button type="button" class="draw-tool" data-tool="rectangle" title="Click two opposite corners">▱ Rectangle</button><button type="button" class="draw-tool" data-tool="fib-retracement" title="Click swing high/low points to draw retracement levels">Fib retracement</button><button type="button" class="draw-tool" data-tool="fib-extension" title="Click two points to draw extension levels">Fib extension</button><button type="button" class="draw-tool" data-tool="text" title="Click a point and enter a note">T Text</button><button type="button" class="draw-tool" data-tool="ruler" title="Click two points to measure price change">↔ Measure</button><span class="tool-divider"></span><button type="button" class="draw-action" data-action="undo" title="Remove the last drawing">↶ Undo</button><button type="button" class="draw-action" data-action="clear" title="Remove all drawings for this ticker">Clear drawings</button>`;
@@ -130,8 +521,7 @@ function makeChartShell(host,ticker){
  drawingToolbar.querySelector('[data-action="undo"]').onclick=()=>{const list=currentDrawings();if(list.length){list.pop();saveDrawingStore();drawDrawingOverlay();setChartStatus('Last drawing removed')}else setChartStatus('No drawings to undo')};
  drawingToolbar.querySelector('[data-action="clear"]').onclick=()=>{const list=currentDrawings();if(!list.length){setChartStatus('No drawings on this ticker');return}if(confirm('Clear all drawings for '+ticker+'?')){drawingsByTicker[ticker]=[];pendingAnchor=null;saveDrawingStore();drawDrawingOverlay();setChartStatus('All drawings cleared for '+ticker)}};
  selectDrawingTool('cursor');
- $('reloadDaily').onclick=()=>loadDailyData(ticker,true);$('resetChartView').onclick=resetChartView;$('importOHLCV').onclick=()=>$('ohlcvFile').click();
- $('ohlcvFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const bars=parseOHLCVCSV(await f.text());if(!bars.length)throw new Error('No valid OHLCV rows found.');chartDataByTicker.set(ticker,bars);drawChart(bars,ticker,'Loaded '+bars.length+' daily candles from '+f.name);$('chartMessage').innerHTML='Using uploaded file: '+f.name.replace(/</g,'&lt;')+'. Import a new file to replace this ticker’s chart data. Charts powered by <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.'}catch(err){setChartStatus('CSV import failed: '+err.message)}e.target.value=''};
+ $('reloadDaily').onclick=()=>loadDailyData(ticker,true);$('resetChartView').onclick=resetChartView;
  $('gridToggle').onchange=e=>updateChartStyle('grid',e.target.checked);
  for(const [id,key] of [['ema10Color','ema10'],['ema20Color','ema20'],['ema50Color','ema50'],['ema200Color','ema200'],['bullColor','bull'],['bearColor','bear']])$(id).oninput=e=>updateChartStyle(key,e.target.value);
  return canvas
@@ -180,13 +570,14 @@ function drawOneDrawing(ctx,item,plotWidth,height,preview=false){
 }
 function wireDrawingOverlay(el){drawingOverlay=el;el.style.pointerEvents=drawingTool==='cursor'?'none':'auto';el.style.cursor=drawingTool==='cursor'?'default':'crosshair';el.addEventListener('pointermove',e=>{if(drawingTool==='cursor')return;const r=el.getBoundingClientRect();mousePoint=drawingAnchorAt(e.clientX-r.left,e.clientY-r.top);if(pendingAnchor)drawDrawingOverlay()});el.addEventListener('pointerdown',e=>{if(drawingTool==='cursor')return;const r=el.getBoundingClientRect(),anchor=drawingAnchorAt(e.clientX-r.left,e.clientY-r.top);if(!anchor)return;e.preventDefault();e.stopPropagation();if(drawingTool==='horizontal'){saveNewDrawing({type:'horizontal',a:anchor});return}if(drawingTool==='text'){const text=prompt('Enter chart note:');if(text&&text.trim())saveNewDrawing({type:'text',a:anchor,text:text.trim().slice(0,160)});return}if(!pendingAnchor){pendingAnchor=anchor;mousePoint=anchor;setChartStatus('First point placed · click the second point to finish '+drawingTool.replace('-',' '));drawDrawingOverlay();return}const item={type:drawingTool,a:pendingAnchor,b:anchor};pendingAnchor=null;mousePoint=null;saveNewDrawing(item)});el.addEventListener('pointerleave',()=>{if(!pendingAnchor)mousePoint=null;drawDrawingOverlay()})}
 function undoDrawing(){const list=currentDrawings();if(list.length){list.pop();saveDrawingStore();drawDrawingOverlay()}}
-function parseOHLCVCSV(text){const rows=parseCSV(text);if(rows.length<2)return[];const heads=rows[0].map(x=>x.trim().toLowerCase().replace(/[^a-z0-9]/g,''));const idx=(names)=>heads.findIndex(h=>names.includes(h));let di=idx(['date','datetime','timestamp','time']),oi=idx(['open']),hi=idx(['high']),li=idx(['low']),ci=idx(['close','adjclose','adjustedclose']),vi=idx(['volume','vol']);if([di,oi,hi,li,ci].some(i=>i<0))throw new Error('Expected Date, Open, High, Low and Close columns.');const out=[];for(const r of rows.slice(1)){let date=(r[di]||'').trim();if(!date)continue;let d=new Date(date);if(!Number.isFinite(d.getTime())){const m=date.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);if(m)d=new Date(+m[3],+m[2]-1,+m[1]);}if(!Number.isFinite(d.getTime()))continue;const time=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const n=i=>Number(String(r[i]||'').replace(/,/g,'').trim());const b={time,open:n(oi),high:n(hi),low:n(li),close:n(ci),volume:vi>=0?n(vi):0};if([b.open,b.high,b.low,b.close].every(Number.isFinite)&&b.open>0&&b.high>0&&b.low>0&&b.close>0)out.push(b)}out.sort((a,b)=>a.time.localeCompare(b.time));return out.filter((b,i)=>!i||b.time!==out[i-1].time)}
 function emaData(bars,period){const alpha=2/(period+1);let value=null;return bars.map((b,i)=>{value=value===null?b.close:alpha*b.close+(1-alpha)*value;return i+1>=period?{time:b.time,value}:null}).filter(Boolean)}
 function drawChart(bars,ticker,status){
  const el=$('dailyChart');if(!el||!window.LightweightCharts){setChartStatus('Chart library did not load. Check internet and reload this page.');return}
  const staleOverlay=el.querySelector('.drawing-overlay');if(staleOverlay)staleOverlay.remove();drawingOverlay=null;if(chart){try{chart.remove()}catch(e){}}if(chartResizeObserver)chartResizeObserver.disconnect();
  chartDisplayedBars=bars;
- chart=LightweightCharts.createChart(el,{width:el.clientWidth||900,height:el.clientHeight||470,layout:{background:{type:LightweightCharts.ColorType.Solid,color:'#ffffff'},textColor:'#64748b',fontFamily:'Inter, system-ui, sans-serif',fontSize:12},grid:{vertLines:{visible:!!chartPrefs.grid,color:'#e8edf5'},horzLines:{visible:!!chartPrefs.grid,color:'#e8edf5'}},rightPriceScale:{borderColor:'#e2e8f0',textColor:'#64748b'},timeScale:{borderColor:'#e2e8f0',timeVisible:false,secondsVisible:false},crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:'#94a3b8',width:1,style:LightweightCharts.LineStyle.Dashed},horzLine:{color:'#94a3b8',width:1,style:LightweightCharts.LineStyle.Dashed}}});
+ renderSummary(current());
+ const theme=darkMode?{background:'#000000',text:'#d4d4d4',grid:'#1f1f1f',border:'#303030',crosshair:'#737373'}:{background:'#ffffff',text:'#64748b',grid:'#e8edf5',border:'#e2e8f0',crosshair:'#94a3b8'};
+ chart=LightweightCharts.createChart(el,{width:el.clientWidth||900,height:el.clientHeight||470,layout:{background:{type:LightweightCharts.ColorType.Solid,color:theme.background},textColor:theme.text,fontFamily:'Inter, system-ui, sans-serif',fontSize:12},grid:{vertLines:{visible:!!chartPrefs.grid,color:theme.grid},horzLines:{visible:!!chartPrefs.grid,color:theme.grid}},rightPriceScale:{borderColor:theme.border,textColor:theme.text},timeScale:{borderColor:theme.border,timeVisible:false,secondsVisible:false},crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:theme.crosshair,width:1,style:LightweightCharts.LineStyle.Dashed},horzLine:{color:theme.crosshair,width:1,style:LightweightCharts.LineStyle.Dashed}}});
  candleSeries=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:chartPrefs.bull,downColor:chartPrefs.bear,borderVisible:false,wickUpColor:chartPrefs.bull,wickDownColor:chartPrefs.bear,borderUpColor:chartPrefs.bull,borderDownColor:chartPrefs.bear});
  candleSeries.setData(bars.map(b=>({time:b.time,open:b.open,high:b.high,low:b.low,close:b.close})));
  emaSeries={};for(const [period,color] of [[10,chartPrefs.ema10],[20,chartPrefs.ema20],[50,chartPrefs.ema50],[200,chartPrefs.ema200]]){emaSeries[period]=chart.addSeries(LightweightCharts.LineSeries,{color,lineWidth:1,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:false});emaSeries[period].setData(emaData(bars,period))}
@@ -194,7 +585,7 @@ function drawChart(bars,ticker,status){
  drawingOverlay=document.createElement('canvas');drawingOverlay.className='drawing-overlay';drawingOverlay.setAttribute('aria-label','Chart drawing layer');el.appendChild(drawingOverlay);wireDrawingOverlay(drawingOverlay);
  chart.timeScale().subscribeVisibleLogicalRangeChange(()=>drawDrawingOverlay());chart.subscribeCrosshairMove(()=>drawDrawingOverlay());
  applyDefaultChartView();chartResizeObserver=new ResizeObserver(entries=>{for(const entry of entries){if(chart)chart.resize(Math.max(300,Math.floor(entry.contentRect.width)),Math.max(300,Math.floor(entry.contentRect.height)));resizeDrawingOverlay()}});chartResizeObserver.observe(el);resizeDrawingOverlay();
- setChartStatus(status||('Loaded '+bars.length+' daily candles · last bar '+bars[bars.length-1].time));$('chartMessage').textContent='Source: '+(status&&status.startsWith('Loaded')?'uploaded historical CSV':'local Python helper / Yahoo Finance')+'. Daily bars can be delayed or adjusted differently from your broker. Verify important levels with your primary data source.'
+ setChartStatus(status||('Loaded '+bars.length+' daily candles · last bar '+bars[bars.length-1].time));$('chartMessage').textContent='Source: local Python helper / Yahoo Finance. Daily bars can be delayed or adjusted differently from your broker. Verify important levels with your primary data source.'
 }
 function applyDefaultChartView(){if(!chart||!chartDisplayedBars.length)return;const count=chartDisplayedBars.length;const visibleBars=Math.min(80,count);chart.timeScale().setVisibleLogicalRange({from:Math.max(0,count-visibleBars),to:count+8});if(candleSeries)candleSeries.priceScale().applyOptions({autoScale:true});if(volumeSeries)volumeSeries.priceScale().applyOptions({autoScale:true})}
 function resetChartView(){if(!chart){return}try{applyDefaultChartView();setChartStatus('Chart view reset · default recent-candles view restored (Alt+R)')}catch(err){setChartStatus('Could not reset chart view: '+err.message)}}
@@ -215,29 +606,365 @@ async function requestLocalHistory(url){
  throw new Error('Cannot connect to the local data helper. Check that the black Command Prompt window is still open, and that this page is loaded from http://127.0.0.1:8765 (not by double-clicking index.html). Details: '+(lastError?.message||'network request failed'));
 }
 async function loadDailyData(ticker,force=false){
- if(!force&&chartDataByTicker.has(ticker)){drawChart(chartDataByTicker.get(ticker),ticker,'Loaded cached daily history');return}
+ if(!force&&chartDataByTicker.has(ticker)){emaHistoryState.set(ticker,'loaded');drawChart(chartDataByTicker.get(ticker),ticker,'Loaded cached daily history');return}
  if(!window.LightweightCharts){setChartStatus('Chart library did not load. Check internet connection.');return}
  if(!['127.0.0.1','localhost'].includes(location.hostname)||location.port!=='8765'||location.protocol!=='http:'){
   setChartStatus('Open the desk at http://127.0.0.1:8765');
   $('chartMessage').textContent='The local helper only works when the page is opened from http://127.0.0.1:8765. Do not double-click index.html.';
   return;
  }
- chartLoadingTicker=ticker;setChartStatus('Fetching daily history for '+ticker+' via local helper…');
+ chartLoadingTicker=ticker;emaHistoryState.set(ticker,'loading');setChartStatus('Fetching daily history for '+ticker+' via local helper…');
  try{
   const sym=yahooSymbol(ticker),params=new URLSearchParams({symbol:sym,period:'2y'});
   const data=await requestLocalHistory(new URL('/api/history?'+params.toString(),location.href).toString());
   const bars=Array.isArray(data?.bars)?data.bars:[];
   if(!bars.length)throw new Error(data?.error||('No daily data returned for '+sym));
-  chartDataByTicker.set(ticker,bars);
-  if(current()?.ticker===ticker){drawChart(bars,ticker,'Loaded '+bars.length+' daily candles · 2-year history · latest '+bars[bars.length-1].time);$('chartMessage').innerHTML='Historical data via local Python helper and Yahoo Finance. Daily history is not guaranteed to be real-time and may be rate-limited. Verify important levels with your primary data source. Charts powered by <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.'}
- }catch(err){if(current()?.ticker===ticker){setChartStatus('Automatic data unavailable');$('chartMessage').innerHTML='Could not retrieve daily candles for <b>'+ticker.replace(/</g,'&lt;')+'</b> ('+String(err.message).replace(/</g,'&lt;')+'). You can click Reload daily data to retry, or import a historical OHLCV CSV with Date, Open, High, Low, Close and Volume columns. <br><br><a href="'+chartURL(ticker)+'" target="_blank" rel="noopener noreferrer">Open full TradingView ↗</a>'}}
+  chartDataByTicker.set(ticker,bars);emaHistoryState.set(ticker,'loaded');
+  if($('emaFilter').value!=='all')render();
+  else if(current()?.ticker===ticker)drawChart(bars,ticker,'Loaded '+bars.length+' daily candles · 2-year history · latest '+bars[bars.length-1].time);
+  if(current()?.ticker===ticker)$('chartMessage').innerHTML='Historical data via local Python helper and Yahoo Finance. Daily history is not guaranteed to be real-time and may be rate-limited. Verify important levels with your primary data source. Charts powered by <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.';
+ }catch(err){emaHistoryState.set(ticker,'failed');if(current()?.ticker===ticker){setChartStatus('Automatic data unavailable');$('chartMessage').innerHTML='Could not retrieve daily candles for <b>'+ticker.replace(/</g,'&lt;')+'</b> ('+String(err.message).replace(/</g,'&lt;')+'). You can click Reload daily data to retry, or open the full TradingView chart. <br><br><a href="'+chartURL(ticker)+'" target="_blank" rel="noopener noreferrer">Open full TradingView ↗</a>'}if($('emaFilter').value!=='all')render()}
 }
-function render(){let s=current();renderWatchlist();let filtered=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes($('search').value.toLowerCase()));if(sortAZ)filtered.sort((a,b)=>a.ticker.localeCompare(b.ticker));$('stockList').innerHTML='';if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Import a CSV or change the search.</div>'}else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d||'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
-$('countStocks').textContent=stocks.length;$('countKeep').textContent=[...decisions.values()].filter(x=>x==='Keep').length;$('countSkip').textContent=[...decisions.values()].filter(x=>x==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=!stocks.length||active<=0;$('nextBtn').disabled=!stocks.length||active>=stocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=stocks.length?(active+1)+' / '+stocks.length:'0 / 0';if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
-$('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Decision: '+(decisions.get(s.ticker)||'Not reviewed');makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)}
-function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);if(d!=='Later'){}render()}function next(){if(active<stocks.length-1){active++;render()}}function prev(){if(active>0){active--;render()}}function nextUndecided(){if(!stocks.length)return;for(let n=1;n<=stocks.length;n++){let i=(active+n)%stocks.length;if(!decisions.has(stocks[i].ticker)){active=i;render();return}}alert('All stocks have a decision. You can export or clear decisions.')}
-function exportCSV(mode){let list=stocks.filter(s=>mode==='keep'?decisions.get(s.ticker)==='Keep':decisions.has(s.ticker));if(mode==='all')list=stocks.filter(s=>decisions.has(s.ticker));if(mode==='keep'&&!list.length){alert('No stocks marked Keep yet.');return}const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';let csv=[['Ticker','Decision','Scanner(s)','TradingView URL'].map(esc).join(','),...list.map(s=>[s.ticker,decisions.get(s.ticker)||'',s.scanners.join('; '),'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(s.ticker)].map(esc).join(','))].join('\r\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=mode==='keep'?'swing_kept_stocks.csv':'swing_review_decisions.csv';a.click();URL.revokeObjectURL(url)}
+function emaSnapshot(bars){
+ if(!Array.isArray(bars)||!bars.length)return null;
+ const close=Number(bars[bars.length-1].close),last=bars[bars.length-1],emas={};
+ for(const period of [10,20,50,200]){const series=emaData(bars,period);emas[period]=series.length?Number(series[series.length-1].value):null}
+ return {close,date:last.time,emas};
+}
+function trendLabel(snapshot){
+ if(!snapshot)return 'Awaiting data';
+ const e=snapshot.emas,c=snapshot.close;
+ if([e[10],e[20],e[50],e[200]].every(Number.isFinite)){
+  if(c>e[10]&&e[10]>e[20]&&e[20]>e[50]&&e[50]>e[200])return 'Bullish alignment';
+  if(c<e[10]&&e[10]<e[20]&&e[20]<e[50]&&e[50]<e[200])return 'Bearish alignment';
+ }
+ if(Number.isFinite(e[20])&&Number.isFinite(e[50]))return c>e[20]&&e[20]>e[50]?'Bullish bias':c<e[20]&&e[20]<e[50]?'Bearish bias':'Mixed / transitional';
+ return 'Insufficient history';
+}
+function renderSummary(stock){
+ const snapshot=stock?emaSnapshot(chartDataByTicker.get(stock.ticker)):null;
+ const put=(id,value)=>{const el=$(id);if(el)el.textContent=value};
+ const putDist=(id,ema)=>{const el=$(id);if(!el)return;if(!snapshot||!Number.isFinite(ema)){el.textContent='Insufficient history';el.className='summary-sub neutral';return}const pct=(snapshot.close-ema)/ema*100;el.textContent=(pct>=0?'+':'')+pct.toFixed(2)+'% vs close';el.className='summary-sub '+(pct>0?'positive':pct<0?'negative':'neutral')};
+ if(!snapshot){put('summaryClose','—');put('summaryDate','No history loaded for this ticker');for(const p of [10,20,50,200]){put('summaryEma'+p,'—');putDist('summaryDist'+p,null)}put('summaryTrend','Awaiting data');put('summaryDecision',stock?displayDecision(decisions.get(stock.ticker)):'Not selected');return}
+ put('summaryClose',Number.isFinite(snapshot.close)?snapshot.close.toFixed(2):'—');put('summaryDate',snapshot.date||'Latest bar');
+ for(const p of [10,20,50,200]){const e=snapshot.emas[p];put('summaryEma'+p,Number.isFinite(e)?e.toFixed(2):'Not enough bars');putDist('summaryDist'+p,e)}
+ const trend=trendLabel(snapshot);put('summaryTrend',trend);const trendEl=$('summaryTrend');if(trendEl)trendEl.className=trend.toLowerCase().includes('bullish')?'positive':trend.toLowerCase().includes('bearish')?'negative':'neutral';
+ put('summaryDecision',displayDecision(decisions.get(stock.ticker)));
+}
+
+function renderResearchNotes(stock){
+ const ids=['noteSetupType','noteStatus','noteTrendContext','noteEntryRationale','noteInvalidation','noteReviewDate'];
+ const note=stock?(reviewState.notes[stock.ticker]||{}):{};
+ const label=$('notesTickerLabel');
+ if(label)label.textContent=stock?(stock.ticker+' · saved locally'):'Select a stock to add notes';
+ for(const id of ids){const el=$(id);if(!el)continue;el.disabled=!stock;
+  const key={noteSetupType:'setupType',noteStatus:'status',noteTrendContext:'trendContext',noteEntryRationale:'entryRationale',noteInvalidation:'invalidation',noteReviewDate:'reviewDate'}[id];
+  el.value=note[key]|| (id==='noteStatus'?'Draft':'');
+ }
+ const status=$('notesSaveStatus');
+ if(status)status.textContent=stock?'Notes are stored locally in this browser, per ticker.':'Select a stock before adding notes.';
+}
+function saveResearchNote(){
+ const stock=current();if(!stock)return;
+ reviewState.notes[stock.ticker]={
+  setupType:$('noteSetupType').value,
+  status:$('noteStatus').value,
+  trendContext:$('noteTrendContext').value.slice(0,2000),
+  entryRationale:$('noteEntryRationale').value.slice(0,2000),
+  invalidation:$('noteInvalidation').value.slice(0,200),
+  reviewDate:$('noteReviewDate').value,
+  updatedAt:new Date().toISOString()
+ };
+ const status=$('notesSaveStatus');
+ if(saveReviewState()){if(status)status.textContent='Saved locally for '+stock.ticker+' · '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+}
+
+function setBackupStatus(message){
+ const el=$('backupStatus');if(el)el.textContent=message;
+}
+function isRecord(value){return !!value&&typeof value==='object'&&!Array.isArray(value)}
+function isBackupTicker(value){return typeof value==='string'&&value.length<=100&&/^[A-Z0-9^._&+=-]+:[A-Z0-9^._&+=-]+$/i.test(value)}
+function cleanBackupAnchor(value){
+ if(!isRecord(value)||typeof value.time!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value.time))return null;
+ const price=Number(value.price);if(!Number.isFinite(price)||price<=0)return null;
+ return {time:value.time,price};
+}
+function sanitizeBackupDrawing(value){
+ if(!isRecord(value))return null;
+ const types=['horizontal','trendline','ray','rectangle','fib-retracement','fib-extension','text','ruler'];
+ if(!types.includes(value.type))return null;
+ const a=cleanBackupAnchor(value.a);if(!a)return null;
+ if(value.type==='horizontal')return {type:value.type,a};
+ if(value.type==='text'){
+  const text=String(value.text||'').trim().slice(0,160);return text?{type:value.type,a,text}:null;
+ }
+ const b=cleanBackupAnchor(value.b);return b?{type:value.type,a,b}:null;
+}
+function sanitizeBackup(payload){
+ if(!isRecord(payload)||payload.format!=='SwingReviewDeskBackup'||payload.schemaVersion!==1||!isRecord(payload.data))throw new Error('This is not a supported Swing Review Desk backup (version 1).');
+ const data=payload.data;
+ if(!isRecord(data.reviewState)||!isRecord(data.reviewState.decisions)||!isRecord(data.reviewState.notes)||('riskPlans'in data.reviewState&&!isRecord(data.reviewState.riskPlans))||!Array.isArray(data.watchlist)||!isRecord(data.chartPrefs)||!isRecord(data.drawings)||!['dark','light'].includes(data.theme))throw new Error('The backup is missing required data or has an invalid structure.');
+ const cleanDecisions={};
+ for(const [ticker,value] of Object.entries(data.reviewState.decisions)){
+  if(isBackupTicker(ticker)&&['Keep','Skip','Later'].includes(value))cleanDecisions[ticker.toUpperCase()]=value;
+ }
+ const cleanNotes={};
+ for(const [ticker,note] of Object.entries(data.reviewState.notes)){
+  if(!isBackupTicker(ticker)||!isRecord(note))continue;
+  cleanNotes[ticker.toUpperCase()]={
+   setupType:String(note.setupType||'').slice(0,80),
+   trendContext:String(note.trendContext||'').slice(0,2000),
+   entryRationale:String(note.entryRationale||'').slice(0,2000),
+   invalidation:String(note.invalidation||'').slice(0,200),
+   reviewDate:String(note.reviewDate||'').slice(0,20),
+   status:String(note.status||'Draft').slice(0,40),
+   updatedAt:String(note.updatedAt||'').slice(0,40)
+  };
+ }
+ const cleanRiskPlans={};
+ for(const [ticker,plan] of Object.entries(data.reviewState.riskPlans||{})){
+  if(!isBackupTicker(ticker)||!isRecord(plan))continue;
+  const clean={};
+  for(const key of ['entry','stop','target','quantity','riskBudget']){
+   const value=plan[key];
+   if(value===undefined||value===null||value===''){clean[key]='';continue}
+   const num=Number(value);
+   if(Number.isFinite(num)&&num>=0&&(key!=='quantity'||Number.isInteger(num)))clean[key]=String(value).slice(0,32);
+   else clean[key]='';
+  }
+  cleanRiskPlans[ticker.toUpperCase()]=clean;
+ }
+ const cleanWatchlist=[...new Set(data.watchlist.map(x=>String(x||'').trim().toUpperCase()).filter(x=>/^[A-Z0-9._&-]+:[A-Z0-9._&-]+$/.test(x)))];
+ const prefs={...defaultChartPrefs};
+ if(typeof data.chartPrefs.grid==='boolean')prefs.grid=data.chartPrefs.grid;
+ for(const key of ['ema10','ema20','ema50','ema200','bull','bear']){
+  const value=data.chartPrefs[key];
+  if(typeof value==='string'&&/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value))prefs[key]=value;
+ }
+ const cleanDrawings={};
+ for(const [ticker,items] of Object.entries(data.drawings)){
+  if(!isBackupTicker(ticker)||!Array.isArray(items))continue;
+  cleanDrawings[ticker.toUpperCase()]=items.slice(0,1000).map(sanitizeBackupDrawing).filter(Boolean);
+ }
+ return {
+  reviewState:{version:1,decisions:cleanDecisions,notes:cleanNotes,riskPlans:cleanRiskPlans},
+  watchlist:cleanWatchlist,
+  chartPrefs:prefs,
+  drawings:cleanDrawings,
+  theme:data.theme
+ };
+}
+function exportBackup(){
+ const payload={
+  format:'SwingReviewDeskBackup',
+  schemaVersion:1,
+  exportedAt:new Date().toISOString(),
+  data:{
+   reviewState:{version:1,decisions:Object.fromEntries(decisions),notes:reviewState.notes,riskPlans:reviewState.riskPlans||{}},
+   watchlist:myWatchlist,
+   chartPrefs:chartPrefs,
+   drawings:drawingsByTicker,
+   theme:darkMode?'dark':'light'
+  }
+ };
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a'),date=new Date().toISOString().slice(0,10);
+ a.href=url;a.download='swing_review_desk_backup_'+date+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ setBackupStatus('Backup downloaded · '+date+'. Keep the file somewhere safe.');
+}
+async function importBackupFile(file){
+ let payload;
+ try{payload=JSON.parse(await file.text())}catch(e){throw new Error('That file is not valid JSON. Choose a Swing Review Desk backup file.')}
+ const clean=sanitizeBackup(payload);
+ const detail='This will replace saved decisions, research notes, risk plans, watchlist, chart settings, drawings and theme in this browser. It cannot be undone from inside the app. Continue?';
+ if(!confirm(detail))return false;
+ const keys={
+  review:'swingReviewStateV1',
+  watchlist:'swingReviewMyWatchlist',
+  prefs:'swingReviewChartPrefs',
+  drawings:'swingReviewDrawings',
+  theme:'swingReviewTheme'
+ };
+ const next={
+  [keys.review]:JSON.stringify(clean.reviewState),
+  [keys.watchlist]:JSON.stringify(clean.watchlist),
+  [keys.prefs]:JSON.stringify(clean.chartPrefs),
+  [keys.drawings]:JSON.stringify(clean.drawings),
+  [keys.theme]:clean.theme
+ };
+ const previous={};for(const key of Object.values(keys))previous[key]=localStorage.getItem(key);
+ try{
+  for(const [key,value] of Object.entries(next))localStorage.setItem(key,value);
+ }catch(err){
+  for(const [key,value] of Object.entries(previous)){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value)}catch(rollbackError){}}
+  throw new Error('Browser storage could not save the backup. Previous saved data was kept where possible. Check available browser storage and try again.');
+ }
+ reviewState.version=1;reviewState.decisions=clean.reviewState.decisions;reviewState.notes=clean.reviewState.notes;reviewState.riskPlans=clean.reviewState.riskPlans;
+ decisions.clear();for(const [ticker,value] of Object.entries(clean.reviewState.decisions))decisions.set(ticker,value);
+ myWatchlist=clean.watchlist;
+ chartPrefs=clean.chartPrefs;
+ drawingsByTicker=clean.drawings;
+ darkMode=clean.theme==='dark';
+ applyTheme();
+ render();
+ setBackupStatus('Backup restored successfully. Re-import your scanner CSVs if needed.');
+ return true;
+}
+
+
+function renderRiskPlan(stock){
+ const ids=['riskEntry','riskStop','riskTarget','riskQuantity','riskBudget'];
+ const keys=['entry','stop','target','quantity','riskBudget'];
+ const plan=stock?(reviewState.riskPlans?.[stock.ticker]||{}):{};
+ const label=$('riskPlanTicker');
+ if(label)label.textContent=stock?(stock.ticker+' · long trade · saved locally'):'Select a ticker';
+ ids.forEach((id,i)=>{const el=$(id);if(!el)return;el.disabled=!stock;el.value=plan[keys[i]]??''});
+ calculateRiskPlan();
+}
+function saveRiskPlan(){
+ const stock=current();if(!stock)return;
+ if(!reviewState.riskPlans)reviewState.riskPlans={};
+ reviewState.riskPlans[stock.ticker]={
+  entry:$('riskEntry').value,
+  stop:$('riskStop').value,
+  target:$('riskTarget').value,
+  quantity:$('riskQuantity').value,
+  riskBudget:$('riskBudget').value
+ };
+ saveReviewState();
+ calculateRiskPlan();
+ const label=$('riskPlanTicker');
+ if(label)label.textContent=stock.ticker+' · long trade · saved locally';
+}
+function calculateRiskPlan(){
+ const get=id=>{const raw=$(id)?.value?.trim()||'';if(!raw)return null;const n=Number(raw);return Number.isFinite(n)&&n>0?n:null};
+ const entry=get('riskEntry'),stop=get('riskStop'),target=get('riskTarget'),quantity=get('riskQuantity'),budget=get('riskBudget');
+ const validQty=quantity!==null&&Number.isInteger(quantity);
+ const put=(id,value)=>{const el=$(id);if(el)el.textContent=value};
+ const fmt=n=>Number.isFinite(n)?n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+ const validation=$('riskValidation');
+ if(validation)validation.classList.remove('error');
+ put('riskPerShare','—');put('rewardPerShare','—');put('riskRewardRatio','—');put('riskSuggestedQty','—');put('riskPlannedLoss','—');put('riskPlannedProfit','—');
+ if(quantity!==null&&!validQty){if(validation){validation.textContent='Quantity must be a whole number of shares.';validation.classList.add('error')}return}
+ if(entry===null||stop===null||target===null){
+  if(validation)validation.textContent='Enter positive entry, stop and target prices. Long trades only; excludes fees and slippage.';
+  return;
+ }
+ if(stop>=entry){if(validation){validation.textContent='For a long trade, the stop must be below the entry price.';validation.classList.add('error')}return}
+ if(target<=entry){if(validation){validation.textContent='For a long trade, the target must be above the entry price.';validation.classList.add('error')}return}
+ const risk=entry-stop,reward=target-entry,ratio=reward/risk;
+ put('riskPerShare',fmt(risk));put('rewardPerShare',fmt(reward));put('riskRewardRatio',ratio.toFixed(2)+'R');
+ const suggested=budget!==null?Math.floor(budget/risk):null;
+ put('riskSuggestedQty',suggested===null?'Set budget':String(suggested));
+ put('riskPlannedLoss',quantity!==null&&validQty?'₹'+fmt(quantity*risk):'Set quantity');
+ put('riskPlannedProfit',quantity!==null&&validQty?'₹'+fmt(quantity*reward):'Set quantity');
+ if(validation)validation.textContent=(budget!==null?(suggested>0?'Budget-based size risks approximately ₹'+fmt(suggested*risk)+'.':'Risk budget is too small for one share.'):'Add a risk budget to estimate quantity.')+' Planning aid only; this does not place orders.';
+}
+function matchesEMAFilter(stock,filter,snapshot){
+ if(filter==='all')return {match:true,state:'match'};
+ if(!snapshot){return {match:false,state:emaHistoryState.get(stock.ticker)==='failed'?'failed':'awaiting'}}
+ const e=snapshot.emas,c=snapshot.close;
+ let matched;
+ if(filter==='bullish')matched=[e[10],e[20],e[50],e[200]].every(Number.isFinite)?c>e[10]&&e[10]>e[20]&&e[20]>e[50]&&e[50]>e[200]:null;
+ else if(filter==='bearish')matched=[e[10],e[20],e[50],e[200]].every(Number.isFinite)?c<e[10]&&e[10]<e[20]&&e[20]<e[50]&&e[50]<e[200]:null;
+ else{const condition=filter.match(/^(above|below)(10|20|50|200)$/);if(!condition)return {match:true,state:'match'};const ema=e[Number(condition[2])];matched=Number.isFinite(ema)?(condition[1]==='above'?c>ema:c<ema):null}
+ return matched===null?{match:false,state:'insufficient'}:{match:matched,state:matched?'match':'nonmatch'};
+}
+async function scanEMAData(){
+ if(!['127.0.0.1','localhost'].includes(location.hostname)||location.port!=='8765'||location.protocol!=='http:'){alert('Open the desk at http://127.0.0.1:8765 to load EMA data.');return}
+ if(!stocks.length){alert('Import scanner CSV files first.');return}
+ if(stocks.length>30&&!confirm('This will request historical data for '+stocks.length+' stocks sequentially and may take several minutes. Continue?'))return;
+ const button=$('scanEMAData');button.disabled=true;let loaded=0,failed=0;
+ try{
+  for(let i=0;i<stocks.length;i++){
+   const stock=stocks[i];if(chartDataByTicker.has(stock.ticker)){emaHistoryState.set(stock.ticker,'loaded');loaded++;continue}
+   emaHistoryState.set(stock.ticker,'loading');
+   $('filterStatus').textContent='Loading EMA history '+(i+1)+' / '+stocks.length+' · '+stock.ticker+' · '+loaded+' available, '+failed+' failed';
+   try{
+    const params=new URLSearchParams({symbol:yahooSymbol(stock.ticker),period:'2y'});
+    const data=await requestLocalHistory(new URL('/api/history?'+params.toString(),location.href).toString());
+    if(Array.isArray(data?.bars)&&data.bars.length){chartDataByTicker.set(stock.ticker,data.bars);emaHistoryState.set(stock.ticker,'loaded');loaded++}else{emaHistoryState.set(stock.ticker,'failed');failed++}
+   }catch(err){emaHistoryState.set(stock.ticker,'failed');failed++}
+  }
+ }finally{
+  button.disabled=false;$('filterStatus').textContent='EMA scan finished: '+loaded+' stocks have history, '+failed+' failed or unavailable. EMA filters exclude stocks without loaded data.';
+  render();
+ }
+}
+function displayDecision(value){
+ if(value==='Keep')return 'Selected for Kite';
+ if(value==='Skip')return 'Skipped';
+ if(value==='Later')return 'Later';
+ return 'Not selected';
+}
+
+function render(){
+ renderWatchlist();
+ const query=$('search').value.toLowerCase(),decisionFilter=$('decisionFilter').value,emaFilter=$('emaFilter').value;
+ let candidates=stocks.filter(x=>(x.ticker+' '+x.scanners.join(' ')).toLowerCase().includes(query));
+ if(decisionFilter==='unreviewed')candidates=candidates.filter(x=>!decisions.has(x.ticker));else if(decisionFilter!=='all')candidates=candidates.filter(x=>decisions.get(x.ticker)===decisionFilter);
+ let emaCounts={match:0,nonmatch:0,awaiting:0,failed:0,insufficient:0};
+ let filtered=emaFilter==='all'?candidates:candidates.filter(stock=>{const result=matchesEMAFilter(stock,emaFilter,emaSnapshot(chartDataByTicker.get(stock.ticker)));emaCounts[result.state]++;return result.match});
+ if(emaFilter!=='all'){
+  const incomplete=emaCounts.awaiting+emaCounts.failed+emaCounts.insufficient;
+  $('filterStatus').textContent=filtered.length+' matching '+(filtered.length===1?'stock':'stocks')+'; '+emaCounts.nonmatch+' evaluated and do not match. '+emaCounts.awaiting+' awaiting data, '+emaCounts.failed+' failed, '+emaCounts.insufficient+' with insufficient history.'+(incomplete?' Results may be incomplete.':' All candidate stocks were evaluated.');
+ }else $('filterStatus').textContent='EMA filters use history loaded in this session. Load EMA data to evaluate the full imported list.';
+ if(sortAZ)filtered.sort((a,b)=>a.ticker.localeCompare(b.ticker));
+ visibleStocks=filtered;
+ if(!visibleStocks.length)active=-1;
+ else if(!visibleStocks.includes(stocks[active]))active=stocks.indexOf(visibleStocks[0]);
+ const s=current();
+ $('stockList').innerHTML='';
+ if(!filtered.length){$('stockList').innerHTML='<div class="pad muted">No matching stocks. Try changing filters or load EMA data for the list.</div>'}
+ else filtered.forEach(x=>{let realIndex=stocks.indexOf(x),d=decisions.get(x.ticker)||'';let div=document.createElement('div');div.className='stock'+(realIndex===active?' active':'');div.innerHTML='<div style="min-width:0"><div class="name"></div><div class="sub"></div></div><span class="decision '+d.toLowerCase()+'">'+(d?displayDecision(d):'')+'</span>';div.querySelector('.name').textContent=x.plain;div.querySelector('.sub').textContent=x.scanners.join(', ');div.onclick=()=>{active=realIndex;render()};$('stockList').appendChild(div)});
+ const stockListEl=$('stockList'),activeRow=stockListEl.querySelector('.stock.active');
+ if(activeRow){
+  const listRect=stockListEl.getBoundingClientRect(),rowRect=activeRow.getBoundingClientRect();
+  if(rowRect.top<listRect.top)stockListEl.scrollTop-=listRect.top-rowRect.top;
+  else if(rowRect.bottom>listRect.bottom)stockListEl.scrollTop+=rowRect.bottom-listRect.bottom;
+ }
+ const visibleIndex=visibleStocks.indexOf(s);$('countStocks').textContent=stocks.length;$('countKeep').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Keep').length;$('countSkip').textContent=stocks.filter(x=>decisions.get(x.ticker)==='Skip').length;$('fileCount').textContent=filesLoaded+' file'+(filesLoaded===1?'':'s');$('prevBtn').disabled=visibleIndex<=0;$('nextBtn').disabled=visibleIndex<0||visibleIndex>=visibleStocks.length-1;$('openTV').disabled=!s;syncWatchToggle();$('keepBtn').disabled=!s;$('skipBtn').disabled=!s;$('laterBtn').disabled=!s;$('nextUndecided').disabled=!s;$('position').textContent=visibleStocks.length?(visibleIndex+1)+' / '+visibleStocks.length:'0 / 0';
+ if(!s){$('activeTicker').textContent='No stock selected';$('activeMeta').textContent='Import one or more Chartink CSV files.';renderSummary(null);renderResearchNotes(null);renderRiskPlan(null);$('chartbox').innerHTML='<div class="empty"><div><div style="font-size:42px;margin-bottom:10px">📈</div><b>Your daily candlestick chart will appear here</b><p>Import a Chartink CSV, then select a ticker from the list.</p></div></div>';return}
+ $('activeTicker').textContent=s.plain;$('activeMeta').textContent='TradingView symbol: '+s.ticker+' · Scanner(s): '+s.scanners.join(', ')+' · Status: '+displayDecision(decisions.get(s.ticker));
+ renderSummary(s);renderResearchNotes(s);renderRiskPlan(s);makeChartShell($('chartbox'),s.ticker);if(chartDataByTicker.has(s.ticker))drawChart(chartDataByTicker.get(s.ticker),s.ticker,'Loaded cached daily history');else loadDailyData(s.ticker)
+}
+function setDecision(d){const s=current();if(!s)return;decisions.set(s.ticker,d);saveReviewState();render()}function next(){const i=visibleStocks.indexOf(current());if(i>=0&&i<visibleStocks.length-1){active=stocks.indexOf(visibleStocks[i+1]);render()}}function prev(){const i=visibleStocks.indexOf(current());if(i>0){active=stocks.indexOf(visibleStocks[i-1]);render()}}function nextUndecided(){const currentIndex=visibleStocks.indexOf(current());if(currentIndex<0)return;for(let n=1;n<=visibleStocks.length;n++){let stock=visibleStocks[(currentIndex+n)%visibleStocks.length];if(!decisions.has(stock.ticker)){active=stocks.indexOf(stock);render();return}}alert('All visible stocks have a decision. You can export or clear decisions.')}
+function selectedStocksForKite(){return stocks.filter(s=>decisions.get(s.ticker)==='Keep')}
+function exportCSV(){
+ const list=selectedStocksForKite();
+ if(!list.length){alert('Select at least one stock with “Select for Kite” first.');return}
+ const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const csv=[['Symbol to search in Kite','Full ticker','Scanner(s)','TradingView URL'].map(esc).join(','),...list.map(s=>[s.plain,s.ticker,s.scanners.join('; '),'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(s.ticker)].map(esc).join(','))].join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='zerodha_selected_stocks.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const status=$('selectionExportStatus');if(status)status.textContent='Exported '+list.length+' selected';
+}
+async function copySelectedSymbols(){
+ const list=selectedStocksForKite();
+ if(!list.length){alert('Select at least one stock with “Select for Kite” first.');return}
+ const symbols=[...new Set(list.map(s=>s.plain).filter(Boolean))];
+ const text=symbols.join('\n');
+ let copied=false;
+ try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);copied=true}}catch(e){}
+ if(!copied){
+  const box=document.createElement('textarea');box.value=text;box.setAttribute('readonly','');box.style.position='fixed';box.style.opacity='0';document.body.appendChild(box);box.select();
+  try{copied=document.execCommand('copy')}catch(e){copied=false}box.remove();
+ }
+ const status=$('selectionExportStatus');
+ if(copied){if(status)status.textContent='Copied '+symbols.length+' symbols · add each in Kite'}
+ else {window.prompt('Copy these symbols and search them in Kite:',text);if(status)status.textContent='Copy symbols from the dialog'}
+}
+$('themeToggle').addEventListener('click',toggleTheme);applyTheme();
+// Keep the wheel gesture inside the stock list rather than letting the fixed workspace swallow it.
+$('stockList').addEventListener('wheel',e=>{
+ const list=e.currentTarget;
+ if(list.scrollHeight<=list.clientHeight)return;
+ e.preventDefault();
+ list.scrollTop+=e.deltaY;
+},{passive:false});
+
+$('copySelected').addEventListener('click',copySelectedSymbols);$('exportKeep').addEventListener('click',exportCSV);
 $('files').addEventListener('change',async e=>{const selected=[...e.target.files];for(const f of selected){try{addCSV(f.name,await f.text());filesLoaded++}catch(err){alert('Could not read '+f.name+': '+err.message)}}if(stocks.length){stocks.sort((a,b)=>a.ticker.localeCompare(b.ticker));active=0}render();e.target.value=''});
-$('market').addEventListener('change',()=>{if(stocks.length){stocks=stocks.map(s=>({...s,ticker:s.ticker.includes(':')?s.ticker:$('market').value+':'+s.ticker}));render()}});$('search').addEventListener('input',render);$('addWatchTicker').onclick=addWatchlistTicker;$('watchTickerInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWatchlistTicker()}});$('watchToggle').onclick=toggleCurrentWatchlist;$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('exportKeep').onclick=()=>exportCSV('keep');$('exportAll').onclick=()=>exportCSV('all');$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();render()}};
+$('search').addEventListener('input',render);$('decisionFilter').addEventListener('change',render);$('emaFilter').addEventListener('change',render);$('scanEMAData').addEventListener('click',scanEMAData);$('sortName').onclick=()=>{sortAZ=!sortAZ;stocks.sort((a,b)=>sortAZ?a.ticker.localeCompare(b.ticker):0);active=0;render()};$('prevBtn').onclick=prev;$('nextBtn').onclick=next;$('keepBtn').onclick=()=>setDecision('Keep');$('skipBtn').onclick=()=>setDecision('Skip');$('laterBtn').onclick=()=>setDecision('Later');$('nextUndecided').onclick=nextUndecided;$('openTV').onclick=()=>{let s=current();if(s)window.open(chartURL(s.ticker),'_blank','noopener')};$('resetKeep').onclick=()=>{const kept=[...decisions.entries()].filter(([,value])=>value==='Keep');if(!kept.length){alert('There are no selected stocks to reset.');return}if(confirm('Reset '+kept.length+' selected stock(s) to undecided? Skip and Later decisions will be preserved.')){for(const [ticker] of kept)decisions.delete(ticker);saveReviewState();render()}};$('clearDecisions').onclick=()=>{if(confirm('Clear all Keep/Skip/Later decisions?')){decisions.clear();saveReviewState();render()}};
 document.addEventListener('keydown',e=>{if(e.altKey&&!e.ctrlKey&&!e.metaKey&&e.key.toLowerCase()==='r'){e.preventDefault();resetChartView();return}if(e.key==='Escape'&&drawingTool!=='cursor'){selectDrawingTool('cursor');pendingAnchor=null;mousePoint=null;drawDrawingOverlay();return}if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(e.key==='ArrowDown'){e.preventDefault();next()}else if(e.key==='ArrowUp'){e.preventDefault();prev()}else if(e.key.toLowerCase()==='k')setDecision('Keep');else if(e.key.toLowerCase()==='s')setDecision('Skip');else if(e.key.toLowerCase()==='l')setDecision('Later');else if(e.key==='Enter')next()});render();
 </script></body></html>
