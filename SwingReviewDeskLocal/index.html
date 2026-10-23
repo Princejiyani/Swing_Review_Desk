@@ -61,6 +61,7 @@
 :root[data-theme="dark"] .warn{background:#29200d;color:#fcd34d;border-color:#5b4820}
 :root[data-theme="dark"] .stat{background:linear-gradient(180deg,#0d0d0d,#080808);border-color:var(--line)}
 :root[data-theme="dark"] .stock,:root[data-theme="dark"] .watch-item-row{border-color:#262626}
+:root[data-theme="dark"] .list{border-top-color:#262626}
 :root[data-theme="dark"] .stock:hover,:root[data-theme="dark"] .watch-item:hover{background:#191919}
 :root[data-theme="dark"] .stock.active{background:#202020}
 :root[data-theme="dark"] .stock .name,:root[data-theme="dark"] .watch-symbol,:root[data-theme="dark"] .section-title,:root[data-theme="dark"] .empty b{color:#e5edf8}
@@ -377,7 +378,7 @@ button:active{transform:none}
 
 </style></head>
 <body>
-<header><div><h1>⚡ Swing Review Desk</h1><small>CSV stock review · Chart + EMAs · Kite shortlist</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="copySelected" title="Copy selected stock symbols so you can add them to Kite">Copy for Kite</button><button id="exportKeep" title="Download the selected stocks as a reference CSV">Export selected</button><small class="selection-export-status" id="selectionExportStatus" aria-live="polite"></small></div></header>
+<header><div><h1>⚡ Swing Review Desk</h1><small>Review charts · Track setups · Shortlist stocks</small></div><div class="row"><button id="themeToggle" type="button" aria-pressed="false" title="Switch between light and dark appearance">🌙 Dark mode</button><label class="filebtn"><input id="files" type="file" accept=".csv,text/csv" multiple hidden><button class="primary" onclick="document.getElementById('files').click()">＋ Import scanner CSVs</button></label><button id="copySelected" title="Copy selected stock symbols so you can add them to Kite">Copy for Kite</button><button id="exportKeep" title="Download the selected stocks as a reference CSV">Export selected</button><small class="selection-export-status" id="selectionExportStatus" aria-live="polite"></small></div></header>
 <div class="wrap">
 <aside class="panel">
 <div class="pad stack">
