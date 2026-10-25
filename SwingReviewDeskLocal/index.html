@@ -473,7 +473,7 @@ function parseCSV(text){let rows=[],row=[],cell='',quoted=false;for(let i=0;i<te
 function normTicker(raw){let s=String(raw||'').trim().replace(/^['"]|['"]$/g,'').toUpperCase();if(!s)return '';s=s.replace(/\s+/g,'');if(s.includes(':'))return s;return 'NSE:'+s}
 function findTickerCol(headers){
  const normalizeHeader=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
- const opts=['symbol','ticker','tradingsymbol','stock','stockname','name','company','companyname','nsecode','bsecode','code','symbolforkite','symboltosearchinkite','fullticker','exchangeticker'];
+ const opts=['fullticker','symbolforkite','symboltosearchinkite','symbol','ticker','tradingsymbol','stock','stockname','name','company','companyname','nsecode','bsecode','code','exchangeticker'];
  const h=headers.map(normalizeHeader);
  for(const o of opts){const i=h.indexOf(o);if(i>=0)return i}
  return -1
