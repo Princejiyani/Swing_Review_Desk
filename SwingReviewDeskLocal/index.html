@@ -471,8 +471,28 @@ function syncWatchToggle(){const s=current();const button=$('watchToggle');if(!b
 function toggleCurrentWatchlist(){const s=current();if(!s)return;if(myWatchlist.includes(s.ticker))myWatchlist=myWatchlist.filter(x=>x!==s.ticker);else myWatchlist.unshift(s.ticker);saveWatchlist();renderWatchlist();syncWatchToggle()}
 function parseCSV(text){let rows=[],row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++}else quoted=!quoted}else if(c===','&&!quoted){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row);row=[];cell=''}else cell+=c}if(cell.length||row.length){row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row)}return rows}
 function normTicker(raw){let s=String(raw||'').trim().replace(/^['"]|['"]$/g,'').toUpperCase();if(!s)return '';s=s.replace(/\s+/g,'');if(s.includes(':'))return s;return 'NSE:'+s}
-function findTickerCol(headers){const opts=['symbol','ticker','tradingsymbol','trading symbol','stock','stock name','name','company','company name','nse code','bse code','code'];let h=headers.map(x=>x.trim().toLowerCase());for(const o of opts){let i=h.indexOf(o);if(i>=0)return i}return -1}
-function addCSV(filename,text){const rows=parseCSV(text);if(!rows.length)return;let headers=rows[0].map(x=>x.trim()),col=findTickerCol(headers),start=1;if(col<0){col=0;start=0}const scanner=filename.replace(/\.csv$/i,'');for(let r=start;r<rows.length;r++){let raw=(rows[r][col]||'').trim();if(!raw)continue;let ticker=normTicker(raw);if(!ticker||ticker.includes(' ')||/^(SYMBOL|TICKER|STOCK NAME|NAME)$/.test(ticker))continue;let key=ticker.toUpperCase();let existing=stocks.find(s=>s.ticker===key);if(existing){if(!existing.scanners.includes(scanner))existing.scanners.push(scanner)}else stocks.push({ticker:key,plain:key.split(':').pop(),scanners:[scanner],source:filename})}}
+function findTickerCol(headers){
+ const normalizeHeader=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+ const opts=['fullticker','symbolforkite','symboltosearchinkite','symbol','ticker','tradingsymbol','stock','stockname','name','company','companyname','nsecode','bsecode','code','exchangeticker'];
+ const h=headers.map(normalizeHeader);
+ for(const o of opts){const i=h.indexOf(o);if(i>=0)return i}
+ return -1
+}
+function addCSV(filename,text){
+ const rows=parseCSV(text);if(!rows.length)return;
+ let headers=rows[0].map(x=>x.trim()),col=findTickerCol(headers),start=1;
+ if(col<0){col=0;start=0}
+ const scanner=filename.replace(/\.csv$/i,'');
+ const headerOnlyValues=new Set(['symbol','ticker','tradingsymbol','stockname','name','company','companyname','nsecode','bsecode','code','symbolforkite','symboltosearchinkite','fullticker','scanners','scanner','tradingviewurl','source']);
+ for(let r=start;r<rows.length;r++){
+  const raw=(rows[r][col]||'').trim();if(!raw)continue;
+  const rawKey=raw.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(headerOnlyValues.has(rawKey))continue;
+  let ticker=normTicker(raw);if(!ticker||ticker.includes(' ')||/^(SYMBOL|TICKER|STOCK NAME|NAME)$/.test(ticker))continue;
+  let key=ticker.toUpperCase();let existing=stocks.find(s=>s.ticker===key);
+  if(existing){if(!existing.scanners.includes(scanner))existing.scanners.push(scanner)}
+  else stocks.push({ticker:key,plain:key.split(':').pop(),scanners:[scanner],source:filename})
+}}
 function current(){const stock=stocks[active]||null;return stock&&visibleStocks.includes(stock)?stock:null}
 function chartURL(ticker){return 'https://www.tradingview.com/chart/?symbol='+encodeURIComponent(ticker)}
 const defaultChartPrefs={grid:false,ema10:'#0d9488',ema20:'#f59e0b',ema50:'#2563eb',ema200:'#9333ea',bull:'#16a34a',bear:'#ef4444'};
